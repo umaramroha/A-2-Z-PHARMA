@@ -28,7 +28,6 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (items.length === 0) return;
 
-    // Save order to localStorage
     const orderId = "ORD" + Date.now().toString();
     const newOrder = {
       id: orderId,
@@ -62,9 +61,6 @@ export default function CheckoutPage() {
     setOrderPlaced(true);
     clearCart();
   };
-    setOrderPlaced(true);
-    clearCart();
-  };
 
   // Empty cart
   if (items.length === 0 && !orderPlaced) {
@@ -93,29 +89,32 @@ export default function CheckoutPage() {
           Order Placed Successfully!
         </h1>
         <p className="text-gray-600 mb-8">
-          Thank you for shopping with A2Z Pharma. We&apos;ll contact you soon on your mobile number.
+          Thank you for shopping with A2Z Pharma. We&apos;ll contact you soon on
+          your mobile number.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
-  <Link
-    href="/orders"
-    className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
-  >
-    View My Orders
-  </Link>
-  <Link
-    href="/products"
-    className="inline-block border-2 border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-full font-semibold transition"
-  >
-    Continue Shopping
-  </Link>
-</div>
+          <Link
+            href="/orders"
+            className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
+          >
+            View My Orders
+          </Link>
+          <Link
+            href="/products"
+            className="inline-block border-2 border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-full font-semibold transition"
+          >
+            Continue Shopping
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl md:text-4xl font-bold mb-8 text-primary">Checkout</h1>
+      <h1 className="text-3xl md:text-4xl font-bold mb-8 text-primary">
+        Checkout
+      </h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -326,7 +325,9 @@ export default function CheckoutPage() {
 
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal ({totalItems} items)</span>
+                  <span className="text-gray-600">
+                    Subtotal ({totalItems} items)
+                  </span>
                   <span className="font-semibold">₹{totalPrice}</span>
                 </div>
                 <div className="flex justify-between text-sm">
