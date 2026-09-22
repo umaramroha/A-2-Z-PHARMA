@@ -2,82 +2,18 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useMemo, useEffect } from "react";
 
-const allProducts = [
-  {
-    id: "1",
-    name: "Ayurvedic Capsule",
-    slug: "ayurvedic-capsule",
-    price: 299,
-    mrp: 399,
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500",
-    category: "general-problems",
-  },
-  {
-    id: "2",
-    name: "Herbal Safoof",
-    slug: "herbal-safoof",
-    price: 199,
-    mrp: 249,
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=500",
-    category: "general-problems",
-  },
-  {
-    id: "3",
-    name: "Majoon Special",
-    slug: "majoon-special",
-    price: 499,
-    mrp: 599,
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500",
-    category: "male-problems",
-  },
-  {
-    id: "4",
-    name: "Women Wellness Tonic",
-    slug: "women-wellness-tonic",
-    price: 349,
-    mrp: 449,
-    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=500",
-    category: "female-problems",
-  },
-  {
-    id: "5",
-    name: "Unani Pills",
-    slug: "unani-pills",
-    price: 249,
-    mrp: 299,
-    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500",
-    category: "general-problems",
-  },
-  {
-    id: "6",
-    name: "Herbal Oil",
-    slug: "herbal-oil",
-    price: 399,
-    mrp: 499,
-    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=500",
-    category: "general-problems",
-  },
-  {
-    id: "7",
-    name: "Men Power Capsule",
-    slug: "men-power-capsule",
-    price: 599,
-    mrp: 799,
-    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500",
-    category: "male-problems",
-  },
-  {
-    id: "8",
-    name: "Female Vitality Syrup",
-    slug: "female-vitality-syrup",
-    price: 449,
-    mrp: 549,
-    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=500",
-    category: "female-problems",
-  },
-];
+type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  mrp: number | null;
+  image: string | null;
+  category: string | null;
+  description: string | null;
+};
 
 const priceRanges = [
   { label: "All Prices", value: "all" },
@@ -90,7 +26,6 @@ const sortOptions = [
   { label: "Default", value: "default" },
   { label: "Price: Low to High", value: "price-asc" },
   { label: "Price: High to Low", value: "price-desc" },
-  { label: "Discount: High to Low", value: "discount" },
   { label: "Name: A to Z", value: "name" },
 ];
 
@@ -99,34 +34,43 @@ function ProductsContent() {
   const category = searchParams.get("category");
   const query = searchParams.get("q") || "";
 
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("default");
 
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (category) params.set("category", category);
+        if (query) params.set("q", query);
+
+        const res = await fetch(`/api/products?${params.toString()}`);
+        const data = await res.json();
+        setAllProducts(data.products || []);
+      } catch (err) {
+        console.error("Failed to fetch products", err);
+        setAllProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [category, query]);
+
+  // Client-side price filter + sort
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
-    // Category filter
-    if (category) {
-      result = result.filter((p) => p.category === category);
-    }
-
-    // Search filter
-    if (query.trim()) {
-      const q = query.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q)
-      );
-    }
-
-    // Price filter
     if (priceRange !== "all") {
       const [min, max] = priceRange.split("-").map(Number);
       result = result.filter((p) => p.price >= min && p.price <= max);
     }
 
-    // Sorting
     switch (sortBy) {
       case "price-asc":
         result.sort((a, b) => a.price - b.price);
@@ -134,19 +78,13 @@ function ProductsContent() {
       case "price-desc":
         result.sort((a, b) => b.price - a.price);
         break;
-      case "discount":
-        result.sort(
-          (a, b) =>
-            (b.mrp - b.price) / b.mrp - (a.mrp - a.price) / a.mrp
-        );
-        break;
       case "name":
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
     }
 
     return result;
-  }, [category, query, priceRange, sortBy]);
+  }, [allProducts, priceRange, sortBy]);
 
   const categoryTitles: Record<string, string> = {
     "male-problems": "Male Problems",
@@ -164,7 +102,7 @@ function ProductsContent() {
           : "Our Products"}
       </h1>
       <p className="text-gray-600 mb-6">
-        {filteredProducts.length} product(s) found
+        {loading ? "Loading..." : `${filteredProducts.length} product(s) found`}
       </p>
 
       {/* Category Filters */}
@@ -211,9 +149,8 @@ function ProductsContent() {
         </Link>
       </div>
 
-      {/* Price Filter + Sort Bar */}
+      {/* Price + Sort Bar */}
       <div className="bg-white rounded-lg border shadow-sm p-4 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        {/* Price Filter */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-gray-700">Price:</span>
           <div className="flex flex-wrap gap-2">
@@ -233,7 +170,6 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Sort */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
             Sort by:
@@ -253,7 +189,22 @@ function ProductsContent() {
       </div>
 
       {/* Product Grid */}
-      {filteredProducts.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-lg border overflow-hidden animate-pulse"
+            >
+              <div className="aspect-square bg-gray-200"></div>
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border">
           <div className="text-6xl mb-4">🔍</div>
           <h2 className="text-xl font-bold mb-2 text-gray-700">
@@ -272,9 +223,8 @@ function ProductsContent() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {filteredProducts.map((product) => {
-            const discount = Math.round(
-              ((product.mrp - product.price) / product.mrp) * 100
-            );
+            const mrp = product.mrp || product.price;
+            const discount = Math.round(((mrp - product.price) / mrp) * 100);
             return (
               <Link
                 key={product.id}
@@ -282,14 +232,22 @@ function ProductsContent() {
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden border group"
               >
                 <div className="aspect-square bg-gray-100 overflow-hidden relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                  <span className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
-                    {discount}% OFF
-                  </span>
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-4xl text-gray-300">
+                      💊
+                    </div>
+                  )}
+                  {discount > 0 && (
+                    <span className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                      {discount}% OFF
+                    </span>
+                  )}
                 </div>
                 <div className="p-3 md:p-4">
                   <h3 className="font-semibold text-sm md:text-base mb-2 line-clamp-2 min-h-[2.5rem]">
@@ -299,9 +257,11 @@ function ProductsContent() {
                     <span className="text-lg font-bold text-primary">
                       ₹{product.price}
                     </span>
-                    <span className="text-sm text-gray-400 line-through">
-                      ₹{product.mrp}
-                    </span>
+                    {product.mrp && product.mrp > product.price && (
+                      <span className="text-sm text-gray-400 line-through">
+                        ₹{product.mrp}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
