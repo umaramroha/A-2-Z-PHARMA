@@ -1,8 +1,10 @@
 export const siteConfig = {
   name: "A2Z Pharma",
   tagline: "Ayurvedic & Unani Care",
-  phone: "+91-XXXXXXXXXX",
-  whatsapp: "+91-XXXXXXXXXX",
+  phone: "+91 84101 27168",
+  phoneRaw: "918410127168",
+  whatsapp: "+91 84101 27168",
+  whatsappRaw: "918410127168",
   email: "contact@a2zpharma.com",
   address: "Amroha, Uttar Pradesh, India",
 };

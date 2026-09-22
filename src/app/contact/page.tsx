@@ -33,8 +33,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <a href="tel:+91XXXXXXXXXX" className="text-gray-600 text-sm hover:text-primary">
-                    +91-XXXXXXXXXX
+                  <a href="tel:+91 84101 27168" className="text-gray-600 text-sm hover:text-primary">
+                    +91 84101 27168
                   </a>
                 </div>
               </div>
@@ -52,6 +52,7 @@ export default function ContactPage() {
               </div>
 
               <div className="flex gap-4">
+
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
                   <span className="text-xl">💬</span>
                 </div>

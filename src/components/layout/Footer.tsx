@@ -40,8 +40,8 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4">Contact Us</h3>
             <ul className="space-y-2 text-sm">
               <li>📍 Amroha, Uttar Pradesh, India</li>
-              <li>📞 +91-XXXXXXXXXX</li>
-              <li>✉️ contact@a2zpharma.com</li>
+              <li>📞 +918410127168</li>
+              <li>✉️ contact@a2z.com</li>
             </ul>
           </div>
         </div>
