@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [orderPlaced, setOrderPlaced] = useState(false);
 
@@ -26,12 +28,40 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (items.length === 0) return;
 
-    // Phase 9-13 me real order + payment integrate karenge
-    alert(
-      `Order placed successfully!\n\nName: ${formData.name}\nTotal: ₹${finalTotal}\nPayment: ${
-        paymentMethod === "cod" ? "Cash on Delivery" : "UPI"
-      }`
-    );
+    // Save order to localStorage
+    const orderId = "ORD" + Date.now().toString();
+    const newOrder = {
+      id: orderId,
+      userId: user?.id || "guest",
+      customerName: formData.name,
+      customerMobile: formData.mobile,
+      customerEmail: formData.email,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.pincode,
+      items: items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      })),
+      subtotal: totalPrice,
+      deliveryFee: deliveryFee,
+      total: finalTotal,
+      status: "PENDING",
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === "cod" ? "PENDING" : "PAID",
+      createdAt: new Date().toISOString(),
+    };
+
+    const allOrders = JSON.parse(localStorage.getItem("a2z-orders") || "[]");
+    allOrders.push(newOrder);
+    localStorage.setItem("a2z-orders", JSON.stringify(allOrders));
+
+    setOrderPlaced(true);
+    clearCart();
+  };
     setOrderPlaced(true);
     clearCart();
   };
@@ -65,12 +95,20 @@ export default function CheckoutPage() {
         <p className="text-gray-600 mb-8">
           Thank you for shopping with A2Z Pharma. We&apos;ll contact you soon on your mobile number.
         </p>
-        <Link
-          href="/products"
-          className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
-        >
-          Continue Shopping
-        </Link>
+        <div className="flex gap-3 justify-center flex-wrap">
+  <Link
+    href="/orders"
+    className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
+  >
+    View My Orders
+  </Link>
+  <Link
+    href="/products"
+    className="inline-block border-2 border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-full font-semibold transition"
+  >
+    Continue Shopping
+  </Link>
+</div>
       </div>
     );
   }

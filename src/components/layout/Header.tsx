@@ -3,18 +3,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { totalItems } = useCart();
+  const { user, isLoggedIn, logout } = useAuth();
 
   const categories = [
     { name: "Male Problems", slug: "male-problems" },
     { name: "Female Problems", slug: "female-problems" },
     { name: "General Problems", slug: "general-problems" },
   ];
+
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
+    router.push("/");
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -59,7 +71,8 @@ export default function Header() {
         </div>
 
         {/* Right Icons */}
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
+        <div className="flex items-center gap-2 md:gap-3 ml-auto">
+          {/* Cart */}
           <Link
             href="/cart"
             className="relative p-2 hover:bg-gray-100 rounded-full transition"
@@ -84,16 +97,83 @@ export default function Header() {
             )}
           </Link>
 
-          <Link
-            href="/login"
-            className="hidden md:inline-block text-sm font-medium text-primary hover:text-primary-dark transition"
-          >
-            Login / Register
-          </Link>
+          {/* User / Login */}
+          {isLoggedIn && user ? (
+            <div className="relative hidden md:block">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 rounded-full transition"
+              >
+                <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium text-gray-700 max-w-[80px] truncate">
+                  {user.name.split(" ")[0]}
+                </span>
+                <svg
+                  className="w-3 h-3 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setUserMenuOpen(false)}
+                  ></div>
+                  <div className="absolute right-0 top-full mt-2 bg-white shadow-lg rounded-md py-2 w-48 z-50 border">
+                    <div className="px-4 py-2 border-b">
+                      <p className="text-xs text-gray-500">Signed in as</p>
+                      <p className="text-sm font-semibold truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <Link
+                      href="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 hover:text-primary transition"
+                    >
+                      👤 My Profile
+                    </Link>
+                    <Link
+                      href="/orders"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 hover:text-primary transition"
+                    >
+                      📦 My Orders
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600 transition"
+                    >
+                      🚪 Logout
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden md:inline-block text-sm font-medium text-primary hover:text-primary-dark transition px-3 py-1.5 hover:bg-gray-100 rounded-full"
+            >
+              Login / Register
+            </Link>
+          )}
 
           <Link
             href="/admin/login"
-            className="hidden md:inline-block text-xs text-gray-500 hover:text-primary transition"
+            className="hidden md:inline-block text-xs text-gray-500 hover:text-primary transition px-2"
           >
             Admin
           </Link>
@@ -217,6 +297,14 @@ export default function Header() {
       {mobileMenuOpen && (
         <nav className="md:hidden bg-primary text-white">
           <div className="container mx-auto px-4 py-3 flex flex-col gap-3 text-sm">
+            {isLoggedIn && user ? (
+              <div className="bg-white/10 rounded-lg p-3 mb-2">
+                <p className="text-xs opacity-80">Signed in as</p>
+                <p className="font-semibold">{user.name}</p>
+                <p className="text-xs opacity-80">{user.email}</p>
+              </div>
+            ) : null}
+
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>
               Home
             </Link>
@@ -247,9 +335,28 @@ export default function Header() {
               Contact Us
             </Link>
             <hr className="border-white/20 my-1" />
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              Login / Register
-            </Link>
+
+            {isLoggedIn && user ? (
+              <>
+                <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                  👤 My Profile
+                </Link>
+                <Link href="/orders" onClick={() => setMobileMenuOpen(false)}>
+                  📦 My Orders
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-left text-red-300"
+                >
+                  🚪 Logout
+                </button>
+              </>
+            ) : (
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                Login / Register
+              </Link>
+            )}
+
             <Link
               href="/admin/login"
               onClick={() => setMobileMenuOpen(false)}
