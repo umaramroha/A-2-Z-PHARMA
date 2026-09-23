@@ -7,22 +7,27 @@ export function middleware(request: NextRequest) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
 
-  // Skip middleware for admin login
+  // Skip middleware for admin login and non-admin routes
   if (!isAdminRoute || isLoginPage) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", "no-store, must-revalidate");
+    return res;
   }
 
   // Check for session cookie (iron-session cookie name)
   const sessionCookie = request.cookies.get("a2z-session");
 
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    const res = NextResponse.redirect(new URL("/admin/login", request.url));
+    res.headers.set("Cache-Control", "no-store, must-revalidate");
+    return res;
   }
 
-  // Note: Actual admin verification happens in API routes / pages
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set("Cache-Control", "no-store, must-revalidate");
+  return res;
 }
 
 export const config = {
-  matcher: "/admin/:path*",
+  matcher: ["/admin/:path*"],
 };

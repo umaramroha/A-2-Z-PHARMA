@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
@@ -8,6 +8,25 @@ export default function AdminLogin() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/admin/me", { cache: "no-store" });
+        const data = await res.json();
+        if (data.admin) {
+          router.replace("/admin/dashboard");
+          return;
+        }
+      } catch (err) {
+        console.error("Session check failed", err);
+      }
+      setChecking(false);
+    };
+    checkSession();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +48,21 @@ export default function AdminLogin() {
         return;
       }
 
-      router.push("/admin/dashboard");
+      router.replace("/admin/dashboard");
     } catch (err) {
       console.error("Admin login error:", err);
       setError("Network error. Try again.");
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8 bg-gray-100">
@@ -100,14 +127,6 @@ export default function AdminLogin() {
               {loading ? "Logging in..." : "Login to Dashboard"}
             </button>
           </form>
-
-          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 text-center">
-            <strong>Demo credentials:</strong>
-            <br />
-            📧 admin@a2zpharma.com
-            <br />
-            🔑 Admin@12345
-          </div>
         </div>
       </div>
     </div>
