@@ -7,57 +7,74 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type OrderItem = {
   id: string;
-  name: string;
-  price: number;
   quantity: number;
+  price: string;
+  product: {
+    id: string;
+    name: string;
+    image: string | null;
+    slug: string;
+  };
 };
 
 type Order = {
   id: string;
-  userId: string;
   customerName: string;
   customerMobile: string;
   address: string;
   city: string;
   state: string;
   pincode: string;
-  items: OrderItem[];
-  subtotal: number;
-  deliveryFee: number;
-  total: number;
+  subtotal: string;
+  deliveryFee: string;
+  total: string;
   status: string;
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
+  items: OrderItem[];
 };
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { user, isLoggedIn } = useAuth();
+  const { isLoggedIn, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!authLoading && !isLoggedIn) {
       router.push("/login");
       return;
     }
 
-    const allOrders: Order[] = JSON.parse(
-      localStorage.getItem("a2z-orders") || "[]"
+    if (isLoggedIn) {
+      fetchOrders();
+    }
+  }, [isLoggedIn, authLoading, router]);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch("/api/orders");
+      const data = await res.json();
+      setOrders(data.orders || []);
+    } catch (err) {
+      console.error("Failed to fetch orders", err);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+        </div>
+      </div>
     );
-    const myOrders = allOrders
-      .filter((o) => o.userId === user?.id)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-    setOrders(myOrders);
-    setLoaded(true);
-  }, [isLoggedIn, user, router]);
-
-  if (!loaded) return null;
+  }
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-yellow-100 text-yellow-800",
@@ -132,24 +149,37 @@ export default function OrdersPage() {
 
             {/* Items */}
             <div className="p-5">
-              <div className="space-y-2 mb-4">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between text-sm py-1"
-                  >
-                    <span className="text-gray-700">
-                      {item.name}{" "}
-                      <span className="text-gray-400">× {item.quantity}</span>
-                    </span>
-                    <span className="font-medium">
-                      ₹{item.price * item.quantity}
+              <div className="space-y-3 mb-4">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3">
+                    {item.product.image && (
+                      <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden shrink-0">
+                        <img
+                          src={item.product.image}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/products/${item.product.slug}`}
+                        className="font-medium text-sm hover:text-primary line-clamp-1"
+                      >
+                        {item.product.name}
+                      </Link>
+                      <p className="text-xs text-gray-500">
+                        Qty: {item.quantity} × ₹{item.price}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-sm">
+                      ₹{parseFloat(item.price) * item.quantity}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t pt-3 flex justify-between items-center">
+              <div className="border-t pt-3 flex justify-between items-center flex-wrap gap-2">
                 <div className="text-sm text-gray-600">
                   <p>
                     <strong>Payment:</strong>{" "}

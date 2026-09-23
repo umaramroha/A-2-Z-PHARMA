@@ -7,9 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   const deliveryFee = totalPrice >= 500 ? 0 : 50;
   const finalTotal = totalPrice + deliveryFee;
@@ -24,43 +26,91 @@ export default function CheckoutPage() {
     pincode: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
 
-    const orderId = "ORD" + Date.now().toString();
-    const newOrder = {
-      id: orderId,
-      userId: user?.id || "guest",
-      customerName: formData.name,
-      customerMobile: formData.mobile,
-      customerEmail: formData.email,
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      pincode: formData.pincode,
-      items: items.map((i) => ({
-        id: i.id,
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-      })),
-      subtotal: totalPrice,
-      deliveryFee: deliveryFee,
-      total: finalTotal,
-      status: "PENDING",
-      paymentMethod: paymentMethod,
-      paymentStatus: paymentMethod === "cod" ? "PENDING" : "PAID",
-      createdAt: new Date().toISOString(),
-    };
+    if (!user) {
+      setOrderError("Please login to place an order");
+      return;
+    }
 
-    const allOrders = JSON.parse(localStorage.getItem("a2z-orders") || "[]");
-    allOrders.push(newOrder);
-    localStorage.setItem("a2z-orders", JSON.stringify(allOrders));
+    setPlacingOrder(true);
+    setOrderError("");
 
-    setOrderPlaced(true);
-    clearCart();
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formData.name,
+          customerMobile: formData.mobile,
+          customerEmail: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          items: items.map((i) => ({
+            id: i.id,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          subtotal: totalPrice,
+          deliveryFee: deliveryFee,
+          total: finalTotal,
+          paymentMethod: paymentMethod,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setOrderError(data.error || "Failed to place order");
+        setPlacingOrder(false);
+        return;
+      }
+
+      setOrderPlaced(true);
+      clearCart();
+    } catch (err) {
+      console.error("Order error:", err);
+      setOrderError("Network error. Please try again.");
+      setPlacingOrder(false);
+    }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Login required
+  if (!user && !orderPlaced) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center max-w-md">
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className="text-2xl font-bold mb-4 text-primary">
+          Login Required
+        </h1>
+        <p className="text-gray-600 mb-8">
+          Please login to place your order.
+        </p>
+        <Link
+          href="/login"
+          className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
+        >
+          Login / Register
+        </Link>
+      </div>
+    );
+  }
 
   // Empty cart
   if (items.length === 0 && !orderPlaced) {
@@ -120,6 +170,13 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Form */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Error Message */}
+            {orderError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {orderError}
+              </div>
+            )}
+
             {/* Customer Info */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-bold mb-4 text-primary">
@@ -351,9 +408,10 @@ export default function CheckoutPage() {
 
               <button
                 type="submit"
-                className="w-full mt-6 bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition"
+                disabled={placingOrder}
+                className="w-full mt-6 bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
               >
-                Place Order
+                {placingOrder ? "Placing Order..." : "Place Order"}
               </button>
 
               <p className="text-xs text-gray-500 text-center mt-3">

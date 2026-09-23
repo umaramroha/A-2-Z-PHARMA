@@ -32,6 +32,8 @@ model Order {
   city           String
   state          String
   pincode        String
+  subtotal       Decimal     @default(0)
+  deliveryFee    Decimal     @default(0)
   total          Decimal
   status         String      @default("PENDING")
   paymentMethod  String
