@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
               setFormData({ ...formData, newEmail: e.target.value })
             }
             className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
-            placeholder="newadmin@a2zpharma.com"
+            placeholder="newemail@example.com"
           />
         </div>
 

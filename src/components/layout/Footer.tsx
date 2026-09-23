@@ -41,7 +41,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>📍 Amroha, Uttar Pradesh, India</li>
               <li>📞 +918410127168</li>
-              <li>✉️ contact@a2z.com</li>
+              <li>✉️ sahyogherbalpharmacy@gmail.com</li>
             </ul>
           </div>
         </div>
