@@ -94,13 +94,19 @@ export default function AdminDashboard() {
       icon: "👥",
       desc: "View customer list",
     },
-    {
-      label: "Reports",
-      href: "/admin/reports",
-      icon: "📈",
-      desc: "Sales & analytics",
-    },
-  ];
+      {
+    label: "Reports",
+    href: "/admin/reports",
+    icon: "📈",
+    desc: "Sales & analytics",
+  },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: "⚙️",
+    desc: "Change email & password",
+  },
+];
 
   if (loading) {
     return (
