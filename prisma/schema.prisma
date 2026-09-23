@@ -26,6 +26,7 @@ model Product {
 
 model Order {
   id             String      @id @default(cuid())
+  customerId     String?
   customerName   String
   customerMobile String
   customerEmail  String?
@@ -41,7 +42,7 @@ model Order {
   paymentStatus  String      @default("PENDING")
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-customer       Customer?   @relation(fields: [customerId], references: [id])
+  customer       Customer?   @relation(fields: [customerId], references: [id])
   items          OrderItem[]
 }
 
