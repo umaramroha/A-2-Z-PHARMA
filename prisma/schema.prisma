@@ -9,7 +9,6 @@ datasource db {
 
 model Product {
   id          String      @id @default(cuid())
-  customerId     String?
   name        String
   slug        String      @unique
   description String?
@@ -71,5 +70,5 @@ model Customer {
   mobile    String?
   password  String
   createdAt DateTime @default(now())
-orders         Order[]
+  orders    Order[]
 }
