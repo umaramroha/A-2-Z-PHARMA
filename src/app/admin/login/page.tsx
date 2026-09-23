@@ -1,21 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
+  const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Phase 11 me real authentication add karenge
-    if (formData.email && formData.password) {
-      // Temporary: Save cookie to bypass middleware
-      document.cookie = "admin-session=demo; path=/; max-age=86400";
-      alert("Login successful! Redirecting to dashboard...");
-      window.location.href = "/admin/dashboard";
-    } else {
-      setError("Please enter email and password");
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin/dashboard");
+    } catch (err) {
+      console.error("Admin login error:", err);
+      setError("Network error. Try again.");
+      setLoading(false);
     }
   };
 
@@ -76,14 +94,19 @@ export default function AdminLogin() {
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
             >
-              Login to Dashboard
+              {loading ? "Logging in..." : "Login to Dashboard"}
             </button>
           </form>
 
-          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 text-center">
-            Demo: koi bhi email/password daalo, dashboard khul jayega
+          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 text-center">
+            <strong>Demo credentials:</strong>
+            <br />
+            📧 admin@a2zpharma.com
+            <br />
+            🔑 Admin@12345
           </div>
         </div>
       </div>
