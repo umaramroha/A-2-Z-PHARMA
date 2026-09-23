@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,22 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    // Rate limit: 5 attempts per 15 minutes per email
+    const rateKey = `login:${cleanEmail}`;
+    const rateCheck = checkRateLimit(rateKey);
+
+    if (!rateCheck.allowed) {
+      const minutes = Math.ceil(rateCheck.resetIn / 60000);
+      return NextResponse.json(
+        {
+          error: `Too many attempts. Please try again in ${minutes} minute${
+            minutes > 1 ? "s" : ""
+          }.`,
+        },
+        { status: 429 }
+      );
+    }
 
     const customer = await prisma.customer.findUnique({
       where: { email: cleanEmail },
@@ -37,6 +54,9 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    // Success — reset rate limit
+    resetRateLimit(rateKey);
 
     const session = await getIronSession<SessionData>(
       cookies(),

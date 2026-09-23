@@ -14,10 +14,10 @@ export function middleware(request: NextRequest) {
     return res;
   }
 
-  // Check for session cookie (iron-session cookie name)
-  const sessionCookie = request.cookies.get("a2z-session");
+  // Check for admin session cookie
+  const adminCookie = request.cookies.get("a2z-admin-session");
 
-  if (!sessionCookie) {
+  if (!adminCookie) {
     const res = NextResponse.redirect(new URL("/admin/login", request.url));
     res.headers.set("Cache-Control", "no-store, must-revalidate");
     return res;

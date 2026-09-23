@@ -3,7 +3,8 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { sessionOptions } from "@/lib/session";
+import { adminSessionOptions } from "@/lib/adminSession";
+import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
 
 type AdminSessionData = {
   adminId?: string;
@@ -23,8 +24,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Rate limit: 5 attempts per 15 min
+    const rateKey = `admin-login:${cleanEmail}`;
+    const rateCheck = checkRateLimit(rateKey);
+
+    if (!rateCheck.allowed) {
+      const minutes = Math.ceil(rateCheck.resetIn / 60000);
+      return NextResponse.json(
+        {
+          error: `Too many attempts. Please try again in ${minutes} minute${
+            minutes > 1 ? "s" : ""
+          }.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const admin = await prisma.adminUser.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: cleanEmail },
     });
 
     if (!admin) {
@@ -43,9 +62,11 @@ export async function POST(request: Request) {
       );
     }
 
+    resetRateLimit(rateKey);
+
     const session = await getIronSession<AdminSessionData>(
       cookies(),
-      sessionOptions
+      adminSessionOptions
     );
     session.adminId = admin.id;
     session.email = admin.email;

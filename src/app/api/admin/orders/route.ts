@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { sessionOptions } from "@/lib/session";
+import { adminSessionOptions } from "@/lib/adminSession";
 
 type AdminSessionData = {
   adminId?: string;
@@ -14,7 +14,7 @@ type AdminSessionData = {
 async function isAdmin() {
   const session = await getIronSession<AdminSessionData>(
     cookies(),
-    sessionOptions
+    adminSessionOptions
   );
   return session.isAdminLoggedIn && session.adminId;
 }
