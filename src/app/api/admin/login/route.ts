@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     // Rate limit: 5 attempts per 15 min
     const rateKey = `admin-login:${cleanEmail}`;
-    const rateCheck = checkRateLimit(rateKey);
+    const rateCheck = await checkRateLimit(rateKey);
 
     if (!rateCheck.allowed) {
       const minutes = Math.ceil(rateCheck.resetIn / 60000);
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       );
     }
 
-    resetRateLimit(rateKey);
+    await resetRateLimit(rateKey);
 
     const session = await getIronSession<AdminSessionData>(
       cookies(),
