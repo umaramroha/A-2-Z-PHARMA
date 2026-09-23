@@ -7,44 +7,30 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoggedIn, updateProfile, logout } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    mobile: "",
-    email: "",
-  });
+  const { user, isLoggedIn, loading, logout } = useAuth();
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!loading && !isLoggedIn) {
       router.push("/login");
-      return;
     }
-    if (user) {
-      setFormData({
-        name: user.name,
-        mobile: user.mobile,
-        email: user.email,
-      });
-    }
-  }, [isLoggedIn, user, router]);
+  }, [isLoggedIn, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-pulse">
+          <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4"></div>
+          <div className="h-6 bg-gray-200 rounded w-48 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateProfile({
-      name: formData.name,
-      mobile: formData.mobile,
-    });
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 
@@ -70,84 +56,36 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
             <p className="text-gray-600 text-sm">{user.email}</p>
           </div>
-          <button
-            onClick={() => setEditing(!editing)}
-            className="text-sm text-primary hover:underline font-medium"
-          >
-            {editing ? "Cancel" : "Edit"}
-          </button>
         </div>
 
-        {editing ? (
-          <form onSubmit={handleSave} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email (cannot be changed)
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                disabled
-                className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 text-gray-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mobile Number
-              </label>
-              <input
-                type="tel"
-                value={formData.mobile}
-                onChange={(e) =>
-                  setFormData({ ...formData, mobile: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-full font-semibold transition"
-            >
-              Save Changes
-            </button>
-          </form>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Full Name</p>
-              <p className="font-medium">{user.name}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Email</p>
-              <p className="font-medium">{user.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Mobile</p>
-              <p className="font-medium">{user.mobile}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Member Since</p>
-              <p className="font-medium">
-                {new Date(user.createdAt).toLocaleDateString("en-IN")}
-              </p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Full Name</p>
+            <p className="font-medium">{user.name}</p>
           </div>
-        )}
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Email</p>
+            <p className="font-medium">{user.email}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Mobile</p>
+            <p className="font-medium">{user.mobile}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Member Since</p>
+            <p className="font-medium">
+              {new Date(user.createdAt).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+          <strong>Note:</strong> Profile editing Phase 11-2 me aayega. Abhi ye read-only hai.
+        </div>
       </div>
 
       {/* Quick Links */}

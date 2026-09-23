@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -34,12 +34,12 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const result = register(
-      formData.name,
-      formData.email,
-      formData.mobile,
-      formData.password
-    );
+    const result = await register(
+  formData.name,
+  formData.email,
+  formData.mobile,
+  formData.password
+);
 
     setLoading(false);
 

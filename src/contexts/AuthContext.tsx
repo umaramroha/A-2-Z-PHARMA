@@ -13,165 +13,119 @@ export type User = {
   name: string;
   email: string;
   mobile: string;
-  password: string; // demo only - backend me hash hoga
-  createdAt: string;
-};
-
-export type Address = {
-  id: string;
-  name: string;
-  mobile: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  isDefault: boolean;
-};
-
-export type Order = {
-  id: string;
-  userId: string;
-  items: {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }[];
-  total: number;
-  status: string;
-  paymentMethod: string;
   createdAt: string;
 };
 
 type AuthContextType = {
   user: User | null;
   isLoggedIn: boolean;
+  loading: boolean;
   register: (
     name: string,
     email: string,
     mobile: string,
     password: string
-  ) => { success: boolean; message: string };
-  login: (email: string, password: string) => { success: boolean; message: string };
-  logout: () => void;
-  updateProfile: (data: Partial<User>) => void;
+  ) => Promise<{ success: boolean; message: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; message: string }>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_KEY = "a2z-users";
-const CURRENT_USER_KEY = "a2z-current-user";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Load user on mount
   useEffect(() => {
-    const saved = localStorage.getItem(CURRENT_USER_KEY);
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load user", e);
-      }
-    }
-    setMounted(true);
+    refreshUser();
   }, []);
 
-  const getUsers = (): User[] => {
-    const data = localStorage.getItem(USERS_KEY);
-    if (!data) return [];
+  const refreshUser = async () => {
     try {
-      return JSON.parse(data);
-    } catch {
-      return [];
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      setUser(data.user || null);
+    } catch (err) {
+      console.error("Failed to fetch user", err);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const saveUsers = (users: User[]) => {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  };
-
-  const register = (
+  const register = async (
     name: string,
     email: string,
     mobile: string,
     password: string
   ) => {
-    const users = getUsers();
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, mobile, password }),
+      });
 
-    if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      return { success: false, message: "Email already registered" };
-    }
+      const data = await res.json();
 
-    const newUser: User = {
-      id: Date.now().toString(),
-      name,
-      email: email.toLowerCase(),
-      mobile,
-      password,
-      createdAt: new Date().toISOString(),
-    };
+      if (!res.ok) {
+        return { success: false, message: data.error || "Registration failed" };
+      }
 
-    users.push(newUser);
-    saveUsers(users);
-    setUser(newUser);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-
-    return { success: true, message: "Registration successful" };
-  };
-
-  const login = (email: string, password: string) => {
-    const users = getUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!found) {
-      return { success: false, message: "Email not registered" };
-    }
-
-    if (found.password !== password) {
-      return { success: false, message: "Incorrect password" };
-    }
-
-    setUser(found);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(found));
-    return { success: true, message: "Login successful" };
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(CURRENT_USER_KEY);
-  };
-
-  const updateProfile = (data: Partial<User>) => {
-    if (!user) return;
-    const updated = { ...user, ...data };
-    setUser(updated);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updated));
-
-    // Also update in users list
-    const users = getUsers();
-    const idx = users.findIndex((u) => u.id === user.id);
-    if (idx !== -1) {
-      users[idx] = updated;
-      saveUsers(users);
+      setUser(data.user);
+      return { success: true, message: "Registration successful" };
+    } catch (err) {
+      console.error("Register error:", err);
+      return { success: false, message: "Network error. Try again." };
     }
   };
 
-  if (!mounted) return null;
+  const login = async (email: string, password: string) => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, message: data.error || "Login failed" };
+      }
+
+      setUser(data.user);
+      return { success: true, message: "Login successful" };
+    } catch (err) {
+      console.error("Login error:", err);
+      return { success: false, message: "Network error. Try again." };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoggedIn: !!user,
+        loading,
         register,
         login,
         logout,
-        updateProfile,
+        refreshUser,
       }}
     >
       {children}
