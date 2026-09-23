@@ -141,7 +141,9 @@ export default function AdminSettingsPage() {
         <p className="font-semibold text-blue-900">{admin.email}</p>
         <p className="text-xs text-blue-700 mt-1">
           Role: {admin.role} | Since:{" "}
-          {new Date(admin.createdAt).toLocaleDateString("en-IN")}
+{admin.createdAt && !isNaN(new Date(admin.createdAt).getTime())
+  ? new Date(admin.createdAt).toLocaleDateString("en-IN")
+  : "N/A"}
         </p>
       </div>
 
@@ -249,10 +251,6 @@ export default function AdminSettingsPage() {
         </button>
       </form>
 
-      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-        <strong>⚠️ Yaad rakho:</strong> Email change karne ke baad, next login
-        ke waqt naya email use karna.
-      </div>
     </div>
   );
 }
