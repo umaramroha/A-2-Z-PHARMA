@@ -5,7 +5,7 @@ export const siteConfig = {
   phoneRaw: "918410127168",
   whatsapp: "+91 84101 27168",
   whatsappRaw: "918410127168",
-  email: "contact@a2zpharma.com",
+  email: "sahyogherbalpharmacy@gmail.com",
   address: "Amroha, Uttar Pradesh, India",
 };
 

@@ -83,12 +83,6 @@ export default function BlogsPage() {
           </Link>
         ))}
       </div>
-
-      <div className="mt-12 p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-        <p className="text-sm text-yellow-800">
-          <strong>Coming Soon:</strong> Blog detail page aur admin panel se blog add karne ka feature Phase 15 me aayega.
-        </p>
-      </div>
     </div>
   );
 }

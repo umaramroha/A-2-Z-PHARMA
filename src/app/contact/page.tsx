@@ -87,10 +87,10 @@ ${formData.message}`;
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
                   <a
-                    href="mailto:contact@a2zpharma.com"
+                    href="mailto:sahyogherbalpharmacy@gmail.com"
                     className="text-gray-600 text-sm hover:text-primary"
                   >
-                    contact@a2zpharma.com
+                    sahyogherbalpharmacy@gmail.com
                   </a>
                 </div>
               </div>
@@ -111,14 +111,6 @@ ${formData.message}`;
                   </a>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-xs text-green-800">
-                💡 <strong>Quick Response:</strong> WhatsApp pe sabse jaldi
-                reply milta hai. Order ya product ke baare me direct puchh
-                sakte ho.
-              </p>
             </div>
           </div>
 
@@ -207,10 +199,6 @@ ${formData.message}`;
                 </svg>
                 Send via WhatsApp
               </button>
-
-              <p className="text-xs text-gray-500 text-center">
-                Message WhatsApp pe khulega, wahin se bhej dena
-              </p>
             </form>
           </div>
         </div>
