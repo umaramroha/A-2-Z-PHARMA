@@ -99,9 +99,6 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 text-center">
-            Demo: Data aapke browser me save hoga. Backend Phase 11 me aayega.
-          </div>
         </div>
       </div>
     </div>

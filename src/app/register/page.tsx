@@ -169,9 +169,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </Link>
           </p>
 
-          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 text-center">
-            Demo: Data abhi aapke browser me hi save hoga. Backend Phase 11 me aayega.
-          </div>
         </div>
       </div>
     </div>
