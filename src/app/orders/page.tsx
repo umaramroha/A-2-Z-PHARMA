@@ -121,7 +121,10 @@ export default function OrdersPage() {
             className="bg-white rounded-lg shadow-sm border overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-gray-50 px-5 py-3 flex flex-wrap justify-between items-center gap-2 border-b">
+<Link
+  href={`/orders/${order.id}`}
+  className="bg-gray-50 px-5 py-3 flex flex-wrap justify-between items-center gap-2 border-b hover:bg-gray-100 transition cursor-pointer"
+>
               <div>
                 <p className="text-xs text-gray-500">Order ID</p>
                 <p className="font-mono text-sm font-semibold">
@@ -138,14 +141,17 @@ export default function OrdersPage() {
                   })}
                 </p>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  statusColors[order.status] || "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {order.status}
-              </span>
-            </div>
+                <span
+    className={`px-3 py-1 rounded-full text-xs font-bold ${
+      statusColors[order.status] || "bg-gray-100 text-gray-800"
+    }`}
+  >
+    {order.status}
+  </span>
+  <span className="text-xs text-primary font-medium">
+    View Details →
+  </span>
+</Link>
 
             {/* Items */}
             <div className="p-5">

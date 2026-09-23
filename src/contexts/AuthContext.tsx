@@ -32,6 +32,10 @@ type AuthContextType = {
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (
+    name: string,
+    mobile: string
+  ) => Promise<{ success: boolean; message: string }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,14 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user on mount
   useEffect(() => {
     refreshUser();
   }, []);
 
   const refreshUser = async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       const data = await res.json();
       setUser(data.user || null);
     } catch (err) {
@@ -116,6 +119,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateProfile = async (name: string, mobile: string) => {
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, mobile }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, message: data.error || "Update failed" };
+      }
+
+      setUser(data.user);
+      return { success: true, message: "Profile updated" };
+    } catch (err) {
+      console.error("Update profile error:", err);
+      return { success: false, message: "Network error. Try again." };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -126,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         refreshUser,
+        updateProfile,
       }}
     >
       {children}
