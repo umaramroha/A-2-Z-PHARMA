@@ -4,9 +4,30 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    // Rate limit based on IP
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0] ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateKey = `register:${ip}`;
+    const rateCheck = await checkRateLimit(rateKey);
+
+    if (!rateCheck.allowed) {
+      const minutes = Math.ceil(rateCheck.resetIn / 60000);
+      return NextResponse.json(
+        {
+          error: `Too many attempts. Please try again in ${minutes} minute${
+            minutes > 1 ? "s" : ""
+          }.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const { name, email, mobile, password } = await request.json();
 
     // Validation
