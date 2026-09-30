@@ -1,3 +1,4 @@
+import BottomNav from "@/components/layout/BottomNav";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -27,10 +28,11 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </div>
+  <Header />
+  <main className="flex-grow pb-16 md:pb-0">{children}</main>
+  <Footer />
+  <BottomNav />
+</div>
           </CartProvider>
         </AuthProvider>
       </body>
