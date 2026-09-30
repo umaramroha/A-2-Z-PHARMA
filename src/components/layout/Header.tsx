@@ -127,9 +127,6 @@ export default function Header() {
         </div>}
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 grid h-[64px] grid-cols-4 border-t border-gray-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
-        {[['Home','/'],['Shop','/products'],['Cart','/cart'],[isLoggedIn ? 'Account' : 'Login',isLoggedIn ? '/profile' : '/login']].map(([label, href]) => <Link key={href} href={href} className="flex flex-col items-center justify-center gap-1 text-[10px] font-semibold text-gray-500 hover:text-primary"><span className="text-base">{label === 'Home' ? '⌂' : label === 'Shop' ? '◫' : label === 'Cart' ? '🛒' : '◉'}</span><span>{label}</span></Link>)}
-      </nav>
     </header>
   );
 }
