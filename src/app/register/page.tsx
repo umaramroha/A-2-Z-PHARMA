@@ -51,9 +51,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-8 bg-background">
+    <div className="page-shell flex items-center justify-center px-4 py-10 sm:py-16">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+        <div className="surface w-full p-6 sm:p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">
               Create Account
@@ -80,7 +80,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="Enter your full name"
                 required
               />
@@ -96,7 +96,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="your@email.com"
                 required
               />
@@ -112,7 +112,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) =>
                   setFormData({ ...formData, mobile: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="+91 XXXXXXXXXX"
                 required
               />
@@ -128,7 +128,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="Min 6 characters"
                 required
               />
@@ -144,7 +144,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={(e) =>
                   setFormData({ ...formData, confirmPassword: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="Re-enter password"
                 required
               />
@@ -153,7 +153,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
+              className="btn-primary w-full disabled:opacity-50"
             >
               {loading ? "Creating account..." : "Create Account"}
             </button>

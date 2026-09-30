@@ -29,9 +29,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-8 bg-background">
+    <div className="page-shell flex items-center justify-center px-4 py-10 sm:py-16">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+        <div className="surface w-full p-6 sm:p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">
               Welcome Back
@@ -58,7 +58,7 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="your@email.com"
                 required
               />
@@ -74,7 +74,7 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
+                className="input-modern"
                 placeholder="Enter password"
                 required
               />
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-full font-semibold transition disabled:opacity-50"
+              className="btn-primary w-full disabled:opacity-50"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

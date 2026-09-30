@@ -9,9 +9,9 @@ import Footer from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "A2Z Pharma - Ayurvedic & Unani Care",
+  title: { default: "A2Z Pharma | Ayurvedic & Unani Wellness", template: "%s | A2Z Pharma" },
   description:
-    "Authentic Ayurvedic and Unani medicines in Amroha. Delivering wellness across India.",
+    "Shop authentic Ayurvedic and Unani wellness products from A2Z Pharma. Simple ordering and delivery across India.",
 };
 
 export default function RootLayout({

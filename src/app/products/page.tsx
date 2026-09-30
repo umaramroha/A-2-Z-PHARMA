@@ -2,287 +2,74 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useMemo, useEffect } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  mrp: number | null;
-  image: string | null;
-  category: string | null;
-  description: string | null;
-};
+type Product = { id: string; name: string; slug: string; price: number; mrp: number | null; image: string | null; category: string | null; description: string | null };
+const priceRanges = [{ label: "All", value: "all" }, { label: "Under ₹300", value: "0-300" }, { label: "₹300–₹500", value: "300-500" }, { label: "Above ₹500", value: "500-99999" }];
+const sortOptions = [{ label: "Recommended", value: "default" }, { label: "Price: Low to High", value: "price-asc" }, { label: "Price: High to Low", value: "price-desc" }, { label: "Name: A to Z", value: "name" }];
+const categoryTitles: Record<string, string> = { "male-problems": "Male Problems", "female-problems": "Female Problems", "general-problems": "General Problems" };
 
-const priceRanges = [
-  { label: "All Prices", value: "all" },
-  { label: "Under ₹300", value: "0-300" },
-  { label: "₹300 - ₹500", value: "300-500" },
-  { label: "Above ₹500", value: "500-99999" },
-];
-
-const sortOptions = [
-  { label: "Default", value: "default" },
-  { label: "Price: Low to High", value: "price-asc" },
-  { label: "Price: High to Low", value: "price-desc" },
-  { label: "Name: A to Z", value: "name" },
-];
+function ProductCard({ product }: { product: Product }) {
+  const mrp = product.mrp || product.price;
+  const discount = mrp > product.price ? Math.round(((mrp - product.price) / mrp) * 100) : 0;
+  return <Link href={`/products/${product.slug}`} className="group overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl">
+    <div className="relative aspect-square overflow-hidden bg-[#f3f6f4]">
+      {product.image ? <img src={product.image} alt={product.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full w-full items-center justify-center text-5xl text-primary/20">🌿</div>}
+      {discount > 0 && <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold text-white">{discount}% OFF</span>}
+    </div>
+    <div className="p-3.5 sm:p-4">
+      <p className="line-clamp-2 min-h-[2.8rem] text-sm font-semibold leading-5 text-gray-800">{product.name}</p>
+      {product.category && <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">{categoryTitles[product.category] || product.category}</p>}
+      <div className="mt-3 flex items-end justify-between gap-2"><div><span className="text-lg font-extrabold text-primary">₹{product.price}</span>{product.mrp && product.mrp > product.price && <span className="ml-2 text-xs text-gray-400 line-through">₹{product.mrp}</span>}</div><span className="text-xs font-bold text-primary opacity-0 transition group-hover:opacity-100">View →</span></div>
+    </div>
+  </Link>;
+}
 
 function ProductsContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
   const query = searchParams.get("q") || "";
-
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("default");
 
-  // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
-      setLoading(true);
+      setLoading(true); setError(false);
       try {
-        const params = new URLSearchParams();
-        if (category) params.set("category", category);
-        if (query) params.set("q", query);
-
-        const res = await fetch(`/api/products?${params.toString()}`);
-        const data = await res.json();
-        setAllProducts(data.products || []);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-        setAllProducts([]);
-      } finally {
-        setLoading(false);
-      }
+        const params = new URLSearchParams(); if (category) params.set("category", category); if (query) params.set("q", query);
+        const res = await fetch(`/api/products?${params.toString()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed");
+        const data = await res.json(); setAllProducts(data.products || []);
+      } catch { setAllProducts([]); setError(true); } finally { setLoading(false); }
     };
-
     fetchProducts();
   }, [category, query]);
 
-  // Client-side price filter + sort
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
-
-    if (priceRange !== "all") {
-      const [min, max] = priceRange.split("-").map(Number);
-      result = result.filter((p) => p.price >= min && p.price <= max);
-    }
-
-    switch (sortBy) {
-      case "price-asc":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case "name":
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-    }
-
+    if (priceRange !== "all") { const [min, max] = priceRange.split("-").map(Number); result = result.filter(p => p.price >= min && p.price <= max); }
+    if (sortBy === "price-asc") result.sort((a, b) => a.price - b.price);
+    if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
+    if (sortBy === "name") result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   }, [allProducts, priceRange, sortBy]);
 
-  const categoryTitles: Record<string, string> = {
-    "male-problems": "Male Problems",
-    "female-problems": "Female Problems",
-    "general-problems": "General Problems",
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl md:text-4xl font-bold mb-2 text-primary">
-        {query
-          ? `Search: "${query}"`
-          : category
-          ? categoryTitles[category] || "Our Products"
-          : "Our Products"}
-      </h1>
-      <p className="text-gray-600 mb-6">
-        {loading ? "Loading..." : `${filteredProducts.length} product(s) found`}
-      </p>
-
-      {/* Category Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Link
-          href="/products"
-          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            !category
-              ? "bg-primary text-white"
-              : "bg-white border border-gray-300 text-gray-700 hover:bg-primary hover:text-white"
-          }`}
-        >
-          All
-        </Link>
-        <Link
-          href="/products?category=male-problems"
-          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            category === "male-problems"
-              ? "bg-primary text-white"
-              : "bg-white border border-gray-300 text-gray-700 hover:bg-primary hover:text-white"
-          }`}
-        >
-          Male Problems
-        </Link>
-        <Link
-          href="/products?category=female-problems"
-          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            category === "female-problems"
-              ? "bg-primary text-white"
-              : "bg-white border border-gray-300 text-gray-700 hover:bg-primary hover:text-white"
-          }`}
-        >
-          Female Problems
-        </Link>
-        <Link
-          href="/products?category=general-problems"
-          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            category === "general-problems"
-              ? "bg-primary text-white"
-              : "bg-white border border-gray-300 text-gray-700 hover:bg-primary hover:text-white"
-          }`}
-        >
-          General Problems
-        </Link>
+  const title = query ? `Search results` : category ? categoryTitles[category] || "Our Products" : "Our Products";
+  return <div className="page-shell">
+    <div className="border-b border-gray-200 bg-white"><div className="section-shell py-8 sm:py-10"><p className="eyebrow">A2Z Pharma catalog</p><div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h1 className="section-title">{title}</h1>{query && <p className="mt-1 text-sm text-gray-500">Showing matches for “{query}”</p>}</div><p className="text-sm font-medium text-gray-500">{loading ? "Loading products…" : `${filteredProducts.length} product${filteredProducts.length === 1 ? "" : "s"}`}</p></div></div></div>
+    <div className="section-shell py-6 sm:py-8">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">{[["All","/products",!category],["Male Problems","/products?category=male-problems",category === "male-problems"],["Female Problems","/products?category=female-problems",category === "female-problems"],["General Problems","/products?category=general-problems",category === "general-problems"]].map(([label, href, active]) => <Link key={href as string} href={href as string} className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition ${active ? "bg-primary text-white" : "border border-gray-200 bg-white text-gray-600 hover:border-primary/30 hover:text-primary"}`}>{label as string}</Link>)}</div>
+      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-gray-200/80 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="flex gap-2 overflow-x-auto"><span className="self-center whitespace-nowrap text-xs font-bold text-gray-500">Price</span>{priceRanges.map(r => <button key={r.value} onClick={() => setPriceRange(r.value)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${priceRange === r.value ? "bg-primary text-white" : "bg-gray-50 text-gray-600 hover:bg-primary/5"}`}>{r.label}</button>)}</div>
+        <label className="flex items-center gap-2 text-xs font-bold text-gray-500">Sort <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 outline-none focus:border-primary"><option value="default">Recommended</option>{sortOptions.slice(1).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
       </div>
 
-      {/* Price + Sort Bar */}
-      <div className="bg-white rounded-lg border shadow-sm p-4 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-gray-700">Price:</span>
-          <div className="flex flex-wrap gap-2">
-            {priceRanges.map((range) => (
-              <button
-                key={range.value}
-                onClick={() => setPriceRange(range.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
-                  priceRange === range.value
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {range.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-            Sort by:
-          </span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-primary bg-white"
-          >
-            {sortOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Product Grid */}
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-lg border overflow-hidden animate-pulse"
-            >
-              <div className="aspect-square bg-gray-200"></div>
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-lg border">
-          <div className="text-6xl mb-4">🔍</div>
-          <h2 className="text-xl font-bold mb-2 text-gray-700">
-            No products found
-          </h2>
-          <p className="text-gray-500 mb-6">
-            Try changing your search or filter.
-          </p>
-          <Link
-            href="/products"
-            className="inline-block bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-full font-semibold transition"
-          >
-            Clear All Filters
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {filteredProducts.map((product) => {
-            const mrp = product.mrp || product.price;
-            const discount = Math.round(((mrp - product.price) / mrp) * 100);
-            return (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden border group"
-              >
-                <div className="aspect-square bg-gray-100 overflow-hidden relative">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl text-gray-300">
-                      💊
-                    </div>
-                  )}
-                  {discount > 0 && (
-                    <span className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
-                      {discount}% OFF
-                    </span>
-                  )}
-                </div>
-                <div className="p-3 md:p-4">
-                  <h3 className="font-semibold text-sm md:text-base mb-2 line-clamp-2 min-h-[2.5rem]">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-primary">
-                      ₹{product.price}
-                    </span>
-                    {product.mrp && product.mrp > product.price && (
-                      <span className="text-sm text-gray-400 line-through">
-                        ₹{product.mrp}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+      {error ? <div className="surface mt-6 p-10 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-xl text-red-500">!</div><h2 className="mt-4 text-lg font-bold">We couldn’t load the products</h2><p className="mt-2 text-sm text-gray-500">Please refresh and try again.</p><button onClick={() => window.location.reload()} className="btn-primary mt-5">Retry</button></div> : loading ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">{Array.from({length: 8}).map((_, i) => <div key={i} className="overflow-hidden rounded-2xl border bg-white"><div className="aspect-square animate-pulse bg-gray-200"/><div className="space-y-2 p-4"><div className="h-4 animate-pulse rounded bg-gray-200"/><div className="h-4 w-2/3 animate-pulse rounded bg-gray-200"/><div className="h-5 w-1/3 animate-pulse rounded bg-gray-200"/></div></div>)}</div> : filteredProducts.length === 0 ? <div className="surface mt-6 p-12 text-center"><div className="text-5xl">⌕</div><h2 className="mt-4 text-lg font-bold text-gray-800">No products found</h2><p className="mt-2 text-sm text-gray-500">Try another search or clear the filters.</p><Link href="/products" className="btn-primary mt-5">Clear filters</Link></div> : <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">{filteredProducts.map(product => <ProductCard key={product.id} product={product} />)}</div>}
     </div>
-  );
+  </div>;
 }
 
-export default function ProductsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-8 text-center">
-          Loading products...
-        </div>
-      }
-    >
-      <ProductsContent />
-    </Suspense>
-  );
-}
+export default function ProductsPage() { return <Suspense fallback={<div className="section-shell py-16 text-center text-sm text-gray-500">Loading products…</div>}><ProductsContent /></Suspense>; }
