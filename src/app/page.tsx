@@ -1,9 +1,7 @@
-import ProductSlider from "@/components/home/ProductSlider";
 import TrustStrip from "@/components/home/TrustStrip";
 import Link from "next/link";
 import HeroMobile from "@/components/home/HeroMobile";
 import HeroDesktop from "@/components/home/HeroDesktop";
-import BestSellers from "@/components/home/BestSellers";
 
 const categories = [
   {
@@ -21,7 +19,7 @@ const categories = [
   {
     title: "General Wellness",
     slug: "general-problems",
-    icon: "✦",
+    icon: ".",
     copy: "Everyday Ayurvedic & Unani care for the family.",
   },
 ];
@@ -32,7 +30,6 @@ export default function Home() {
 <HeroMobile />
 <HeroDesktop />
 <TrustStrip />
-<BestSellers />
 
 <ProductSlider
   eyebrow="Most loved"
