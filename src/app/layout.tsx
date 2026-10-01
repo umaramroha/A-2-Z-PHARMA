@@ -1,3 +1,4 @@
+import WhatsAppButton from "@/components/layout/WhatsAppButton";
 import BottomNav from "@/components/layout/BottomNav";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -31,7 +32,8 @@ export default function RootLayout({
   <Header />
   <main className="flex-grow pb-16 md:pb-0">{children}</main>
   <Footer />
-  <BottomNav />
+<BottomNav />
+<WhatsAppButton />
 </div>
           </CartProvider>
         </AuthProvider>
