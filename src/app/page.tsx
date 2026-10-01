@@ -1,4 +1,5 @@
 import TrustStrip from "@/components/home/TrustStrip";
+import ProductSlider from "@/components/home/ProductSlider";
 import Link from "next/link";
 import HeroMobile from "@/components/home/HeroMobile";
 import HeroDesktop from "@/components/home/HeroDesktop";
