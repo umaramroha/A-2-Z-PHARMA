@@ -1,3 +1,4 @@
+import TrustStrip from "@/components/home/TrustStrip";
 import Link from "next/link";
 import HeroMobile from "@/components/home/HeroMobile";
 import HeroDesktop from "@/components/home/HeroDesktop";
@@ -27,9 +28,10 @@ const categories = [
 export default function Home() {
   return (
     <div className="page-shell">
-      <HeroMobile />
-      <HeroDesktop />
-      <BestSellers />
+<HeroMobile />
+<HeroDesktop />
+<TrustStrip />
+<BestSellers />
 
       <section className="section-shell section-space">
         <div className="flex items-end justify-between gap-5">
