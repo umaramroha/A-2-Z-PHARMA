@@ -1,3 +1,4 @@
+import ProductSlider from "@/components/home/ProductSlider";
 import TrustStrip from "@/components/home/TrustStrip";
 import Link from "next/link";
 import HeroMobile from "@/components/home/HeroMobile";
@@ -33,6 +34,32 @@ export default function Home() {
 <TrustStrip />
 <BestSellers />
 
+<ProductSlider
+  eyebrow="Most loved"
+  title="Best Sellers"
+  limit={8}
+/>
+
+<ProductSlider
+  eyebrow="For him"
+  title="Male Wellness"
+  category="male-problems"
+  limit={8}
+/>
+
+<ProductSlider
+  eyebrow="For her"
+  title="Female Wellness"
+  category="female-problems"
+  limit={8}
+/>
+
+<ProductSlider
+  eyebrow="Everyday care"
+  title="General Wellness"
+  category="general-problems"
+  limit={8}
+/>
       <section className="section-shell section-space">
         <div className="flex items-end justify-between gap-5">
           <div>
