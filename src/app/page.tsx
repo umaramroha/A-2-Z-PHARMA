@@ -1,24 +1,27 @@
+import Link from "next/link";
+import BannerSlider from "@/components/home/BannerSlider";
 import TrustStrip from "@/components/home/TrustStrip";
 import ProductSlider from "@/components/home/ProductSlider";
-import Link from "next/link";
+import BlogsStrip from "@/components/home/BlogsStrip";
+import HealthAdviceCTA from "@/components/home/HealthAdviceCTA";
 
 const categories = [
   {
     title: "Male Wellness",
     slug: "male-problems",
     icon: "♂",
-    copy: "Explore products curated around men’s wellness needs.",
+    copy: "Explore products curated around men's wellness needs.",
   },
   {
     title: "Female Wellness",
     slug: "female-problems",
     icon: "♀",
-    copy: "Browse products for everyday women’s wellness.",
+    copy: "Browse products for everyday women's wellness.",
   },
   {
     title: "General Wellness",
     slug: "general-problems",
-    icon: ".",
+    icon: "✦",
     copy: "Everyday Ayurvedic & Unani care for the family.",
   },
 ];
@@ -26,40 +29,17 @@ const categories = [
 export default function Home() {
   return (
     <div className="page-shell">
-<TrustStrip />
+      <BannerSlider />
+      <TrustStrip />
 
-<ProductSlider
-  eyebrow="Most loved"
-  title="Best Sellers"
-  limit={8}
-/>
+      <ProductSlider eyebrow="Most loved" title="Best Sellers" limit={8} />
 
-<ProductSlider
-  eyebrow="For him"
-  title="Male Wellness"
-  category="male-problems"
-  limit={8}
-/>
-
-<ProductSlider
-  eyebrow="For her"
-  title="Female Wellness"
-  category="female-problems"
-  limit={8}
-/>
-
-<ProductSlider
-  eyebrow="Everyday care"
-  title="General Wellness"
-  category="general-problems"
-  limit={8}
-/>
       <section className="section-shell section-space">
         <div className="flex items-end justify-between gap-5">
           <div>
             <p className="eyebrow">Browse by need</p>
             <h2 className="section-title mt-2">
-              Find what you’re looking for
+              Find what you're looking for
             </h2>
             <p className="section-copy">
               Start with a category and discover products available through the
@@ -141,28 +121,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section-shell section-space">
-        <div className="overflow-hidden rounded-[2rem] bg-primary p-7 text-white sm:p-10 lg:flex lg:items-center lg:justify-between lg:p-12">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">
-              Need help?
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold sm:text-3xl">
-              Not sure what to choose?
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-white/70">
-              Connect with the A2Z Pharma team and ask your questions before
-              ordering.
-            </p>
-          </div>
-          <Link
-            href="/contact"
-            className="btn-secondary mt-6 bg-white text-primary lg:mt-0"
-          >
-            Contact A2Z Pharma
-          </Link>
-        </div>
-      </section>
+      <BlogsStrip />
+      <HealthAdviceCTA />
     </div>
   );
 }
