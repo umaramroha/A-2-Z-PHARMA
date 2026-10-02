@@ -100,7 +100,13 @@ export default function AdminDashboard() {
     icon: "📈",
     desc: "Sales & analytics",
   },
-  {
+{
+  label: "Banners",
+  href: "/admin/banners",
+  icon: "🖼️",
+  desc: "Homepage slider manage karo",
+},
+ {
     label: "Settings",
     href: "/admin/settings",
     icon: "⚙️",
