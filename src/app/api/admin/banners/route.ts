@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         linkUrl: linkUrl?.trim() || null,
         ctaText: ctaText?.trim() || null,
         order: parseInt(order) || 0,
-        isActive: isActive !== false,
+isActive: typeof isActive === "boolean" ? isActive : true,
       },
     });
 
