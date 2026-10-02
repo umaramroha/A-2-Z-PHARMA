@@ -1,8 +1,6 @@
 import TrustStrip from "@/components/home/TrustStrip";
 import ProductSlider from "@/components/home/ProductSlider";
 import Link from "next/link";
-import HeroMobile from "@/components/home/HeroMobile";
-import HeroDesktop from "@/components/home/HeroDesktop";
 
 const categories = [
   {
@@ -28,8 +26,6 @@ const categories = [
 export default function Home() {
   return (
     <div className="page-shell">
-<HeroMobile />
-<HeroDesktop />
 <TrustStrip />
 
 <ProductSlider
