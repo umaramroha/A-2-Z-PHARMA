@@ -306,7 +306,7 @@ export default function OrderTrackingPage() {
         {/* Help */}
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <a
-            href={`https://wa.me/918077988509?text=${encodeURIComponent(
+            href={`https://wa.me/918410127168?text=${encodeURIComponent(
               `Hi, I need help with order #${order.id.slice(-8).toUpperCase()}`
             )}`}
             target="_blank"
@@ -327,7 +327,7 @@ export default function OrderTrackingPage() {
       {/* Sticky mobile bar */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
         <a
-          href={`https://wa.me/918077988509?text=${encodeURIComponent(
+          href={`https://wa.me/918410127168?text=${encodeURIComponent(
             `Hi, I need help with order #${order.id.slice(-8).toUpperCase()}`
           )}`}
           target="_blank"

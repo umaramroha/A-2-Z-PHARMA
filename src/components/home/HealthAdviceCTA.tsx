@@ -1,6 +1,6 @@
 export default function HealthAdviceCTA() {
-  const phone = "918077988509";
-  const phoneDisplay = "+91 80779 88509";
+  const phone = "918410127168";
+  const phoneDisplay = "+91 84101 27168";
   const waMessage = encodeURIComponent(
     "Hi A2Z Pharma, I need health advice about a product."
   );

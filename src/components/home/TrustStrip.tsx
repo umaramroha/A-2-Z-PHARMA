@@ -4,7 +4,7 @@ const items = [
   { icon: "✓", label: "100% Authentic", color: "text-green-600" },
   { icon: "🚚", label: "Fast Delivery", color: "text-blue-600" },
   { icon: "💵", label: "COD Available", color: "text-amber-600" },
-  { icon: "💬", label: "WhatsApp", color: "text-green-600", href: "https://wa.me/918077988509" },
+  { icon: "💬", label: "WhatsApp", color: "text-green-600", href: "https://wa.me/918410127168" },
 ];
 
 export default function TrustStrip() {
