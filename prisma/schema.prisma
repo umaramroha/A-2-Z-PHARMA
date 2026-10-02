@@ -1,3 +1,4 @@
+// Prisma schema — Banner model added
 generator client {
   provider = "prisma-client-js"
 }
@@ -71,4 +72,17 @@ model Customer {
   password  String
   createdAt DateTime @default(now())
   orders    Order[]
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String?
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String?
+  ctaText   String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
