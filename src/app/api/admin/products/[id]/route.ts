@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { adminSessionOptions } from "@/lib/adminSession";
 
@@ -17,6 +18,62 @@ async function isAdmin() {
     adminSessionOptions
   );
   return session.isAdminLoggedIn && session.adminId;
+}
+
+const optionalText = (max: number) =>
+  z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.string().trim().max(max).nullable().optional()
+  );
+
+const positivePrice = z
+  .union([z.string(), z.number()])
+  .transform((value) => Number(value))
+  .refine((value) => Number.isFinite(value) && value > 0, {
+    message: "Price must be a valid positive amount",
+  });
+
+const optionalMrp = z
+  .union([z.string(), z.number(), z.null()])
+  .transform((value) =>
+    value === null || value === "" ? null : Number(value)
+  )
+  .refine(
+    (value) => value === null || (Number.isFinite(value) && value > 0),
+    { message: "MRP must be a valid positive amount" }
+  );
+
+const optionalStock = z
+  .union([z.string(), z.number()])
+  .transform((value) => (value === "" ? 0 : Number(value)))
+  .refine(
+    (value) => Number.isSafeInteger(value) && value >= 0 && value <= 10000000,
+    { message: "Stock must be a whole number between 0 and 10000000" }
+  );
+
+const patchSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: optionalText(10000),
+    price: positivePrice.optional(),
+    mrp: optionalMrp.optional(),
+    image: optionalText(2048),
+    category: optionalText(100),
+    stock: optionalStock.optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine(
+    (data) => Object.values(data).some((value) => value !== undefined),
+    { message: "No valid product fields supplied" }
+  );
+
+function isPrismaRecordNotFound(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2025"
+  );
 }
 
 // GET single product
@@ -38,7 +95,7 @@ export async function GET(
     }
 
     return NextResponse.json({ product });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin get product error:", error);
     return NextResponse.json(
       { error: "Failed to fetch product" },
@@ -47,7 +104,7 @@ export async function GET(
   }
 }
 
-// PATCH — update product
+// PATCH — update only validated product fields
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -57,30 +114,57 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name, description, price, mrp, image, category, stock, isActive } =
-      body;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    const updateData: any = {};
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid product details" },
+        { status: 400 }
+      );
+    }
 
-    if (name !== undefined) updateData.name = name.trim();
-    if (description !== undefined)
-      updateData.description = description?.trim() || null;
-    if (price !== undefined) updateData.price = parseFloat(price);
-    if (mrp !== undefined) updateData.mrp = mrp ? parseFloat(mrp) : null;
-    if (image !== undefined) updateData.image = image?.trim() || null;
-    if (category !== undefined)
-      updateData.category = category?.trim() || null;
-    if (stock !== undefined) updateData.stock = parseInt(stock);
-    if (isActive !== undefined) updateData.isActive = isActive;
+    const input = parsed.data;
+    const current = await prisma.product.findUnique({
+      where: { id: params.id },
+      select: { id: true, price: true, mrp: true },
+    });
+
+    if (!current) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const nextPrice = input.price ?? Number(current.price);
+    const nextMrp =
+      input.mrp === undefined
+        ? current.mrp === null
+          ? null
+          : Number(current.mrp)
+        : input.mrp;
+
+    if (nextMrp !== null && nextMrp < nextPrice) {
+      return NextResponse.json(
+        { error: "MRP cannot be lower than selling price" },
+        { status: 400 }
+      );
+    }
 
     const product = await prisma.product.update({
       where: { id: params.id },
-      data: updateData,
+      data: input,
     });
 
     return NextResponse.json({ success: true, product });
-  } catch (error: any) {
+  } catch (error) {
+    if (isPrismaRecordNotFound(error)) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
     console.error("Admin update product error:", error);
     return NextResponse.json(
       { error: "Failed to update product" },
@@ -89,7 +173,7 @@ export async function PATCH(
   }
 }
 
-// DELETE — delete product
+// DELETE — preserve existing soft-delete behavior for products in orders
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -97,6 +181,15 @@ export async function DELETE(
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: params.id },
+      select: { id: true },
+    });
+
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Check if product is used in any order
@@ -121,7 +214,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true, message: "Product deleted" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin delete product error:", error);
     return NextResponse.json(
       { error: "Failed to delete product" },
