@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: { slug: string } }
 ) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { slug: params.slug },
+    const product = await prisma.product.findFirst({
+      where: {
+        slug: params.slug,
+        isActive: true,
+      },
     });
 
     if (!product) {
@@ -18,7 +21,7 @@ export async function GET(
     }
 
     return NextResponse.json({ product });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Product API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch product" },
