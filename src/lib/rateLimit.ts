@@ -3,86 +3,60 @@ import { prisma } from "@/lib/prisma";
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_ATTEMPTS = 5;
 
+type RateLimitRecord = {
+  count: number;
+  resetAt: Date;
+};
+
 export async function checkRateLimit(key: string): Promise<{
   allowed: boolean;
   remaining: number;
   resetIn: number;
 }> {
   const now = new Date();
+  const newResetAt = new Date(now.getTime() + WINDOW_MS);
 
   try {
-    // Use raw query since RateLimit is not in Prisma schema
-    const existing: any[] = await prisma.$queryRaw`
-      SELECT "key", "count", "resetAt"
-      FROM "RateLimit"
-      WHERE "key" = ${key}
-    `;
+    // A single atomic upsert prevents parallel requests from bypassing the limit.
+    const records = await prisma.$queryRaw<RateLimitRecord[]>\`
+      INSERT INTO "RateLimit" ("key", "count", "resetAt")
+      VALUES (\${key}, 1, \${newResetAt})
+      ON CONFLICT ("key") DO UPDATE SET
+        "count" = CASE
+          WHEN "RateLimit"."resetAt" <= \${now} THEN 1
+          ELSE LEAST("RateLimit"."count" + 1, \${MAX_ATTEMPTS + 1})
+        END,
+        "resetAt" = CASE
+          WHEN "RateLimit"."resetAt" <= \${now} THEN \${newResetAt}
+          ELSE "RateLimit"."resetAt"
+        END
+      RETURNING "count", "resetAt"
+    \`;
 
-    // No record — create one
-    if (!existing || existing.length === 0) {
-      const resetAt = new Date(Date.now() + WINDOW_MS);
-      await prisma.$executeRaw`
-        INSERT INTO "RateLimit" ("key", "count", "resetAt")
-        VALUES (${key}, 1, ${resetAt})
-      `;
-      return {
-        allowed: true,
-        remaining: MAX_ATTEMPTS - 1,
-        resetIn: WINDOW_MS,
-      };
-    }
+    const record = records[0];
+    if (!record) throw new Error("Rate limit query returned no record");
 
-    const record = existing[0];
     const resetAt = new Date(record.resetAt);
-
-    // Window expired — reset
-    if (resetAt < now) {
-      const newResetAt = new Date(Date.now() + WINDOW_MS);
-      await prisma.$executeRaw`
-        UPDATE "RateLimit"
-        SET "count" = 1, "resetAt" = ${newResetAt}
-        WHERE "key" = ${key}
-      `;
-      return {
-        allowed: true,
-        remaining: MAX_ATTEMPTS - 1,
-        resetIn: WINDOW_MS,
-      };
-    }
-
-    // Limit reached
-    if (record.count >= MAX_ATTEMPTS) {
-      return {
-        allowed: false,
-        remaining: 0,
-        resetIn: resetAt.getTime() - now.getTime(),
-      };
-    }
-
-    // Increment
-    await prisma.$executeRaw`
-      UPDATE "RateLimit"
-      SET "count" = "count" + 1
-      WHERE "key" = ${key}
-    `;
+    const resetIn = Math.max(0, resetAt.getTime() - now.getTime());
+    const allowed = record.count <= MAX_ATTEMPTS;
 
     return {
-      allowed: true,
-      remaining: MAX_ATTEMPTS - record.count - 1,
-      resetIn: resetAt.getTime() - now.getTime(),
+      allowed,
+      remaining: Math.max(0, MAX_ATTEMPTS - record.count),
+      resetIn,
     };
   } catch (err) {
     console.error("Rate limit error:", err);
-    // Fail open — allow if DB fails
-    return { allowed: true, remaining: MAX_ATTEMPTS, resetIn: WINDOW_MS };
+    // Fail closed for authentication and registration when rate limiting is unavailable.
+    return { allowed: false, remaining: 0, resetIn: WINDOW_MS };
   }
 }
 
 export async function resetRateLimit(key: string) {
   try {
-    await prisma.$executeRaw`
-      DELETE FROM "RateLimit" WHERE "key" = ${key}
-    `;
+    await prisma.$executeRaw\`
+      DELETE FROM "RateLimit" WHERE "key" = \${key}
+    \`;
   } catch (err) {
     console.error("Reset rate limit error:", err);
   }
