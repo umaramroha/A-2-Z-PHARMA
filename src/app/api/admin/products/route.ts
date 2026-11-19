@@ -52,7 +52,8 @@ const productSchema = z
       .refine(
         (value) => value === null || (Number.isFinite(value) && value > 0),
         { message: "MRP must be a valid positive amount" }
-      ),
+      )
+      .optional(),
     image: optionalText(2048),
     category: optionalText(100),
     stock: z
@@ -61,7 +62,8 @@ const productSchema = z
       .refine(
         (value) => Number.isSafeInteger(value) && value >= 0 && value <= 10000000,
         { message: "Stock must be a whole number between 0 and 10000000" }
-      ),
+      )
+      .default(0),
   })
   .refine((data) => data.mrp === null || data.mrp >= data.price, {
     message: "MRP cannot be lower than selling price",
@@ -139,7 +141,7 @@ export async function POST(request: Request) {
         slug: input.slug,
         description: input.description || null,
         price: input.price,
-        mrp: input.mrp,
+        mrp: input.mrp ?? null,
         image: input.image || null,
         category: input.category || null,
         stock: input.stock,
