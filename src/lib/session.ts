@@ -11,8 +11,14 @@ export const defaultSession: SessionData = {
   isLoggedIn: false,
 };
 
+const sessionPassword = process.env.SESSION_PASSWORD;
+
+if (!sessionPassword || sessionPassword.length < 32) {
+  throw new Error("SESSION_PASSWORD must be configured with at least 32 characters");
+}
+
 export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_PASSWORD as string,
+  password: sessionPassword,
   cookieName: "a2z-session",
   cookieOptions: {
     httpOnly: true,
