@@ -1,16 +1,40 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+
+const orderInputSchema = z.object({
+  customerName: z.string().trim().min(1).max(100),
+  customerMobile: z
+    .string()
+    .trim()
+    .min(10)
+    .max(20)
+    .regex(/^[+0-9()\s-]+$/, "Enter a valid mobile number"),
+  customerEmail: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
+  address: z.string().trim().min(1).max(500),
+  city: z.string().trim().min(1).max(100),
+  state: z.string().trim().min(1).max(100),
+  pincode: z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit pincode"),
+  paymentMethod: z.enum(["cod", "upi"]),
+  items: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(100),
+        quantity: z.number().int().min(1).max(100),
+      })
+    )
+    .min(1)
+    .max(50),
+});
 
 // GET — fetch logged-in user's orders
 export async function GET() {
   try {
-    const session = await getIronSession<SessionData>(
-      cookies(),
-      sessionOptions
-    );
+    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
     if (!session.isLoggedIn || !session.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +55,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ orders });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get orders error:", error);
     return NextResponse.json(
       { error: "Failed to fetch orders" },
@@ -40,13 +64,10 @@ export async function GET() {
   }
 }
 
-// POST — create new order
+// POST — create an order using prices and stock verified on the server
 export async function POST(request: Request) {
   try {
-    const session = await getIronSession<SessionData>(
-      cookies(),
-      sessionOptions
-    );
+    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
     if (!session.isLoggedIn || !session.userId) {
       return NextResponse.json(
@@ -55,87 +76,128 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const {
-      customerName,
-      customerMobile,
-      customerEmail,
-      address,
-      city,
-      state,
-      pincode,
-      items,
-      subtotal,
-      deliveryFee,
-      total,
-      paymentMethod,
-    } = body;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    // Validation
-    if (
-      !customerName ||
-      !customerMobile ||
-      !address ||
-      !city ||
-      !state ||
-      !pincode ||
-      !items ||
-      items.length === 0
-    ) {
+    const parsed = orderInputSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "All required fields must be filled" },
+        { error: parsed.error.issues[0]?.message || "Invalid order details" },
         { status: 400 }
       );
     }
 
-    // Create order with items in a transaction
+    const input = parsed.data;
+
+    // Merge duplicate product IDs so quantities and stock checks cannot be bypassed.
+    const quantities = new Map<string, number>();
+    for (const item of input.items) {
+      quantities.set(item.id, (quantities.get(item.id) || 0) + item.quantity);
+    }
+
+    if ([...quantities.values()].some((quantity) => quantity > 100)) {
+      return NextResponse.json(
+        { error: "Maximum quantity per product is 100" },
+        { status: 400 }
+      );
+    }
+
     const order = await prisma.$transaction(async (tx) => {
-      const newOrder = await tx.order.create({
+      const productIds = [...quantities.keys()];
+      const products = await tx.product.findMany({
+        where: { id: { in: productIds }, isActive: true },
+        select: { id: true, price: true, stock: true },
+      });
+
+      if (products.length !== productIds.length) {
+        throw new Error("PRODUCT_UNAVAILABLE");
+      }
+
+      const productsById = new Map(products.map((product) => [product.id, product]));
+      let subtotal = new Prisma.Decimal(0);
+
+      for (const [productId, quantity] of quantities) {
+        const product = productsById.get(productId);
+        if (!product) throw new Error("PRODUCT_UNAVAILABLE");
+
+        if (product.stock < quantity) {
+          throw new Error("INSUFFICIENT_STOCK");
+        }
+
+        subtotal = subtotal.add(product.price.mul(quantity));
+      }
+
+      // Keep the existing delivery rule: free at ₹500+, otherwise ₹50.
+      const deliveryFee = subtotal.greaterThanOrEqualTo(500)
+        ? new Prisma.Decimal(0)
+        : new Prisma.Decimal(50);
+      const total = subtotal.add(deliveryFee);
+
+      // Reserve stock atomically. Any failure rolls back the entire transaction.
+      for (const [productId, quantity] of quantities) {
+        const updated = await tx.product.updateMany({
+          where: {
+            id: productId,
+            isActive: true,
+            stock: { gte: quantity },
+          },
+          data: { stock: { decrement: quantity } },
+        });
+
+        if (updated.count !== 1) {
+          throw new Error("INSUFFICIENT_STOCK");
+        }
+      }
+
+      return tx.order.create({
         data: {
-          customerId: session.userId as string,
-          customerName: customerName.trim(),
-          customerMobile: customerMobile.trim(),
-          customerEmail: customerEmail?.trim() || null,
-          address: address.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          pincode: pincode.trim(),
-          subtotal: subtotal,
-          deliveryFee: deliveryFee,
-          total: total,
+          customerId: session.userId,
+          customerName: input.customerName,
+          customerMobile: input.customerMobile,
+          customerEmail: input.customerEmail || null,
+          address: input.address,
+          city: input.city,
+          state: input.state,
+          pincode: input.pincode,
+          subtotal,
+          deliveryFee,
+          total,
           status: "PENDING",
-          paymentMethod: paymentMethod,
-          paymentStatus: paymentMethod === "cod" ? "PENDING" : "PAID",
+          paymentMethod: input.paymentMethod,
+          // UPI is not gateway-verified in this project yet; never mark it paid here.
+          paymentStatus: "PENDING",
           items: {
-            create: items.map((item: any) => ({
-              productId: item.id,
-              quantity: item.quantity,
-              price: item.price,
+            create: [...quantities].map(([productId, quantity]) => ({
+              productId,
+              quantity,
+              price: productsById.get(productId)!.price,
             })),
           },
         },
-        include: {
-          items: true,
-        },
+        include: { items: true },
       });
-
-      // Update stock
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.id },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
-        });
-      }
-
-      return newOrder;
     });
 
     return NextResponse.json({ success: true, order });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Error && error.message === "PRODUCT_UNAVAILABLE") {
+      return NextResponse.json(
+        { error: "One or more products are unavailable. Please refresh your cart." },
+        { status: 409 }
+      );
+    }
+
+    if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
+      return NextResponse.json(
+        { error: "Some products do not have enough stock. Please update your cart." },
+        { status: 409 }
+      );
+    }
+
     console.error("Create order error:", error);
     return NextResponse.json(
       { error: "Failed to create order. Please try again." },
