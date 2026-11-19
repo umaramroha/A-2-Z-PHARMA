@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+
+const profileSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  mobile: z.string().trim().min(5, "Mobile is required").max(30),
+});
+
+function isPrismaRecordNotFound(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2025"
+  );
+}
 
 export async function PATCH(request: Request) {
   try {
@@ -15,21 +30,24 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, mobile } = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    if (!name || !mobile) {
+    const parsed = profileSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Name and mobile are required" },
+        { error: parsed.error.issues[0]?.message || "Invalid profile details" },
         { status: 400 }
       );
     }
 
     const updated = await prisma.customer.update({
       where: { id: session.userId },
-      data: {
-        name: name.trim(),
-        mobile: mobile.trim(),
-      },
+      data: parsed.data,
       select: {
         id: true,
         name: true,
@@ -44,7 +62,11 @@ export async function PATCH(request: Request) {
     await session.save();
 
     return NextResponse.json({ success: true, user: updated });
-  } catch (error: any) {
+  } catch (error) {
+    if (isPrismaRecordNotFound(error)) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     console.error("Update profile error:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },
