@@ -2,15 +2,32 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { checkRateLimit } from "@/lib/rateLimit";
 
+const registrationSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  email: z.string().trim().email().max(254),
+  mobile: z.string().trim().min(5).max(30),
+  password: z.string().min(6).max(128),
+});
+
+function isUniqueConstraintError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2002"
+  );
+}
+
 export async function POST(request: Request) {
   try {
-    // Rate limit based on IP
+    // Rate limit based on the request IP (proxy configuration must be trusted).
     const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0] ||
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
     const rateKey = `register:${ip}`;
@@ -20,59 +37,53 @@ export async function POST(request: Request) {
       const minutes = Math.ceil(rateCheck.resetIn / 60000);
       return NextResponse.json(
         {
-          error: `Too many attempts. Please try again in ${minutes} minute${
-            minutes > 1 ? "s" : ""
-          }.`,
+          error: `Too many attempts. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`,
         },
         { status: 429 }
       );
     }
 
-    const { name, email, mobile, password } = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    // Validation
-    if (!name || !email || !mobile || !password) {
+    const parsed = registrationSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: parsed.error.issues[0]?.message || "Invalid registration details" },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
+    const { name, email, mobile, password } = parsed.data;
+    const cleanEmail = email.toLowerCase();
 
-    const cleanEmail = email.toLowerCase().trim();
-
-    // Check if email exists
     const existing = await prisma.customer.findUnique({
       where: { email: cleanEmail },
+      select: { id: true },
     });
 
     if (existing) {
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create customer
     const customer = await prisma.customer.create({
       data: {
-        name: name.trim(),
+        name,
         email: cleanEmail,
-        mobile: mobile.trim(),
+        mobile,
         password: hashedPassword,
       },
     });
 
-    // Create session
     const session = await getIronSession<SessionData>(
       cookies(),
       sessionOptions
@@ -93,7 +104,14 @@ export async function POST(request: Request) {
         createdAt: customer.createdAt,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 409 }
+      );
+    }
+
     console.error("Register API error:", error);
     return NextResponse.json(
       { error: "Registration failed. Please try again." },
