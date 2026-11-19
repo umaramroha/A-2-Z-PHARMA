@@ -112,7 +112,12 @@ export async function POST(request: Request) {
     }
 
     const order = await prisma.$transaction(async (tx) => {
-      const productIds = [...quantities.keys()];
+      const productIds: string[] = [];
+      const quantityEntries: Array<[string, number]> = [];
+      quantities.forEach((quantity, productId) => {
+        productIds.push(productId);
+        quantityEntries.push([productId, quantity]);
+      });
       const products = await tx.product.findMany({
         where: { id: { in: productIds }, isActive: true },
         select: { id: true, price: true, stock: true },
@@ -125,7 +130,7 @@ export async function POST(request: Request) {
       const productsById = new Map(products.map((product) => [product.id, product]));
       let subtotal = new Prisma.Decimal(0);
 
-      for (const [productId, quantity] of quantities) {
+      for (const [productId, quantity] of quantityEntries) {
         const product = productsById.get(productId);
         if (!product) throw new Error("PRODUCT_UNAVAILABLE");
 
@@ -143,7 +148,7 @@ export async function POST(request: Request) {
       const total = subtotal.add(deliveryFee);
 
       // Reserve stock atomically. Any failure rolls back the entire transaction.
-      for (const [productId, quantity] of quantities) {
+      for (const [productId, quantity] of quantityEntries) {
         const updated = await tx.product.updateMany({
           where: {
             id: productId,
@@ -176,7 +181,7 @@ export async function POST(request: Request) {
           // UPI is not gateway-verified in this project yet; never mark it paid here.
           paymentStatus: "PENDING",
           items: {
-            create: [...quantities].map(([productId, quantity]) => ({
+            create: quantityEntries.map(([productId, quantity]) => ({
               productId,
               quantity,
               price: productsById.get(productId)!.price,
