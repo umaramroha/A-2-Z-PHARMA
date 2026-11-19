@@ -99,7 +99,12 @@ export async function POST(request: Request) {
       quantities.set(item.id, (quantities.get(item.id) || 0) + item.quantity);
     }
 
-    if ([...quantities.values()].some((quantity) => quantity > 100)) {
+    let hasExcessQuantity = false;
+    quantities.forEach((quantity) => {
+      if (quantity > 100) hasExcessQuantity = true;
+    });
+
+    if (hasExcessQuantity) {
       return NextResponse.json(
         { error: "Maximum quantity per product is 100" },
         { status: 400 }
