@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { adminSessionOptions } from "@/lib/adminSession";
 
@@ -18,6 +19,27 @@ async function getAdminSession() {
     adminSessionOptions
   );
   return session;
+}
+
+const settingsSchema = z.object({
+  currentPassword: z.string().min(1).max(1024),
+  newEmail: z.string().trim().email().max(254),
+  newPassword: z
+    .string()
+    .max(1024)
+    .optional()
+    .refine((value) => value === undefined || value.length >= 6, {
+      message: "New password must be at least 6 characters",
+    }),
+});
+
+function isUniqueConstraintError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2002"
+  );
 }
 
 // GET current admin info
@@ -40,7 +62,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ admin });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get admin settings error:", error);
     return NextResponse.json(
       { error: "Failed to fetch admin" },
@@ -58,25 +80,32 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { currentPassword, newEmail, newPassword } = body;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    if (!currentPassword) {
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Current password is required to make changes" },
+        { error: parsed.error.issues[0]?.message || "Invalid settings" },
         { status: 400 }
       );
     }
+
+    const { currentPassword, newEmail, newPassword } = parsed.data;
 
     const admin = await prisma.adminUser.findUnique({
       where: { id: session.adminId },
     });
 
     if (!admin) {
+      session.destroy();
       return NextResponse.json({ error: "Admin not found" }, { status: 404 });
     }
 
-    // Verify current password
     const passwordMatch = await bcrypt.compare(
       currentPassword,
       admin.password
@@ -89,35 +118,14 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updateData: any = {};
+    const cleanEmail = newEmail.toLowerCase();
+    const updateData: { email?: string; password?: string } = {};
 
-    // Update email
-    if (newEmail && newEmail.trim().toLowerCase() !== admin.email) {
-      const cleanEmail = newEmail.trim().toLowerCase();
-
-      // Check if email is already taken
-      const existing = await prisma.adminUser.findUnique({
-        where: { email: cleanEmail },
-      });
-
-      if (existing && existing.id !== admin.id) {
-        return NextResponse.json(
-          { error: "Email already in use" },
-          { status: 400 }
-        );
-      }
-
+    if (cleanEmail !== admin.email) {
       updateData.email = cleanEmail;
     }
 
-    // Update password
     if (newPassword) {
-      if (newPassword.length < 6) {
-        return NextResponse.json(
-          { error: "New password must be at least 6 characters" },
-          { status: 400 }
-        );
-      }
       updateData.password = await bcrypt.hash(newPassword, 10);
     }
 
@@ -134,14 +142,20 @@ export async function PATCH(request: Request) {
       select: { id: true, email: true, role: true },
     });
 
-    // Update session if email changed
     if (updateData.email) {
-      session.email = updateData.email;
+      session.email = updated.email;
       await session.save();
     }
 
     return NextResponse.json({ success: true, admin: updated });
-  } catch (error: any) {
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return NextResponse.json(
+        { error: "Email already in use" },
+        { status: 409 }
+      );
+    }
+
     console.error("Update admin settings error:", error);
     return NextResponse.json(
       { error: "Failed to update settings" },
