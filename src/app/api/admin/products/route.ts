@@ -65,7 +65,7 @@ const productSchema = z
       )
       .default(0),
   })
-  .refine((data) => data.mrp === null || data.mrp >= data.price, {
+  .refine((data) => data.mrp == null || data.mrp >= data.price, {
     message: "MRP cannot be lower than selling price",
     path: ["mrp"],
   });
