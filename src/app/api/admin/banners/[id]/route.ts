@@ -30,7 +30,7 @@ const bannerPatchSchema = z.object({
   subtitle: optionalText(300),
   imageUrl: z.string().trim().url().max(2048).refine((value) => value.startsWith("https://"), "Image URL must use HTTPS").optional(),
   linkUrl: optionalText(2048).refine(
-    (value) => value === undefined || value === null || value.startsWith("/") || /^https?:\/\//i.test(value),
+    (value) => value === undefined || value === null || (value.startsWith("/") && !value.startsWith("//")) || /^https?:\/\//i.test(value),
     "Link must be a relative path or valid web URL"
   ),
   ctaText: optionalText(50),
