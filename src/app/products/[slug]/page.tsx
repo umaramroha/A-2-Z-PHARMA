@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { getProductOrderMessage, getWhatsAppLink } from "@/lib/whatsapp";
@@ -17,11 +18,8 @@ type Product = {
   stock: number;
 };
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default function ProductDetailPage() {
+  const { slug } = useParams<{ slug: string }>();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
@@ -34,7 +32,7 @@ export default function ProductDetailPage({
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products/${params.slug}`);
+        const res = await fetch(`/api/products/${slug}`);
         if (!res.ok) {
           setNotFound(true);
           return;
@@ -66,7 +64,7 @@ export default function ProductDetailPage({
       }
     };
     fetchProduct();
-  }, [params.slug]);
+  }, [slug]);
 
   if (loading) {
     return (
