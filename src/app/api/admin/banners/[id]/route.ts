@@ -44,9 +44,10 @@ function isNotFoundError(error: unknown) {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,7 +68,7 @@ export async function PATCH(
     }
 
     const banner = await prisma.banner.update({
-      where: { id: params.id },
+      where: { id: id },
       data: parsed.data,
     });
 
@@ -83,14 +84,15 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.banner.delete({ where: { id: params.id } });
+    await prisma.banner.delete({ where: { id: id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     if (isNotFoundError(error)) {
