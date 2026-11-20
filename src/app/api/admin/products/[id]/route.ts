@@ -79,15 +79,16 @@ function isPrismaRecordNotFound(error: unknown) {
 // GET single product
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!product) {
@@ -107,8 +108,9 @@ export async function GET(
 // PATCH — update only validated product fields
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -131,7 +133,7 @@ export async function PATCH(
 
     const input = parsed.data;
     const current = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { id: true, price: true, mrp: true },
     });
 
@@ -155,7 +157,7 @@ export async function PATCH(
     }
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id: id },
       data: input,
     });
 
@@ -176,15 +178,16 @@ export async function PATCH(
 // DELETE — preserve existing soft-delete behavior for products in orders
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { id: true },
     });
 
@@ -194,13 +197,13 @@ export async function DELETE(
 
     // Check if product is used in any order
     const orderItemCount = await prisma.orderItem.count({
-      where: { productId: params.id },
+      where: { productId: id },
     });
 
     if (orderItemCount > 0) {
       // Soft delete — just mark inactive
       await prisma.product.update({
-        where: { id: params.id },
+        where: { id: id },
         data: { isActive: false },
       });
       return NextResponse.json({
@@ -210,7 +213,7 @@ export async function DELETE(
     }
 
     await prisma.product.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true, message: "Product deleted" });
