@@ -82,15 +82,16 @@ function canTransitionPayment(
 // GET single order
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         items: {
           include: {
@@ -120,8 +121,9 @@ export async function GET(
 // PATCH — update order/payment status with guarded transitions
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -146,7 +148,7 @@ export async function PATCH(
 
     const updated = await prisma.$transaction(async (tx) => {
       const current = await tx.order.findUnique({
-        where: { id: params.id },
+        where: { id: id },
         include: { items: { select: { productId: true, quantity: true } } },
       });
 
