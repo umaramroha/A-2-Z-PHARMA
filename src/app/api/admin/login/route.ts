@@ -72,8 +72,9 @@ export async function POST(request: Request) {
 
     await resetRateLimit(rateKey);
 
+    const cookieStore = await cookies();
     const session = await getIronSession<AdminSessionData>(
-      cookies(),
+      cookieStore,
       adminSessionOptions
     );
     session.adminId = admin.id;
