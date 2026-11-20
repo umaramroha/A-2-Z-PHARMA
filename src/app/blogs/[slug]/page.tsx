@@ -99,8 +99,13 @@ A2Z Pharma pe ye sab available hain. WhatsApp pe direct order kar sakte ho.`,
   },
 };
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const blog = blogs[params.slug];
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const blog = blogs[slug];
   if (!blog) return { title: "Blog Not Found" };
   return {
     title: blog.title,
@@ -108,8 +113,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default function BlogDetailPage({ params }: { params: { slug: string } }) {
-  const blog = blogs[params.slug];
+export default async function BlogDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const blog = blogs[slug];
 
   if (!blog) {
     notFound();
