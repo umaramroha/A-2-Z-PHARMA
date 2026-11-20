@@ -12,8 +12,9 @@ type AdminSessionData = {
 
 export async function POST() {
   try {
+    const cookieStore = await cookies();
     const session = await getIronSession<AdminSessionData>(
-      cookies(),
+      cookieStore,
       adminSessionOptions
     );
     session.destroy();
