@@ -6,8 +6,9 @@ import { sessionOptions, SessionData } from "@/lib/session";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getIronSession<SessionData>(
       cookies(),
@@ -19,7 +20,7 @@ export async function GET(
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         items: {
           include: {
