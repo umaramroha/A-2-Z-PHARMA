@@ -10,8 +10,9 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
+    const cookieStore = await cookies();
     const session = await getIronSession<SessionData>(
-      cookies(),
+      cookieStore,
       sessionOptions
     );
 
