@@ -14,8 +14,9 @@ type AdminSessionData = {
 };
 
 async function getAdminSession() {
+  const cookieStore = await cookies();
   const session = await getIronSession<AdminSessionData>(
-    cookies(),
+    cookieStore,
     adminSessionOptions
   );
   return session;
