@@ -34,7 +34,8 @@ const orderInputSchema = z.object({
 // GET — fetch logged-in user's orders
 export async function GET() {
   try {
-    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+    const cookieStore = await cookies();
+    const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
 
     if (!session.isLoggedIn || !session.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,7 +68,8 @@ export async function GET() {
 // POST — create an order using prices and stock verified on the server
 export async function POST(request: Request) {
   try {
-    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+    const cookieStore = await cookies();
+    const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
 
     if (!session.isLoggedIn || !session.userId) {
       return NextResponse.json(
