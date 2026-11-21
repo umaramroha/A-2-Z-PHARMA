@@ -1,27 +1,9 @@
 import { NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { adminSessionOptions } from "@/lib/adminSession";
+import { getValidAdminSession } from "@/lib/adminSession";
 
 export const dynamic = "force-dynamic";
-
-type AdminSessionData = {
-  adminId?: string;
-  email?: string;
-  role?: string;
-  isAdminLoggedIn: boolean;
-};
-
-async function isAdmin() {
-  const cookieStore = await cookies();
-  const session = await getIronSession<AdminSessionData>(
-    cookieStore,
-    adminSessionOptions
-  );
-  return session.isAdminLoggedIn && session.adminId;
-}
 
 const optionalText = (max: number) =>
   z.string().trim().max(max).transform((value) => value || null).nullable().optional();
@@ -49,7 +31,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    if (!(await isAdmin())) {
+    if (!(await getValidAdminSession())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -89,7 +71,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    if (!(await isAdmin())) {
+    if (!(await getValidAdminSession())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
