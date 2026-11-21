@@ -1,15 +1,16 @@
 # A-2-Z PHARMA — Security Audit Findings
 
 **Audit branch:** `chore/security-hardening`  
-**Inspected commit:** `0db761c1812e44469743fb995600b6dcfc1fa2b1`  
+**Inspected commit:** `1beda00edfb6afdee036f876a5fb8ed5a5284767`  
 **Scope:** Read-only source inspection. No application code, schema, environment, or database was changed.
 
 ## Executive summary
 
-The source-level review identified two important security/operational dependencies:
+The source-level review identified three important security/operational dependencies:
 
 1. Admin password changes previously did not revoke older admin sessions. The no-schema password-hash-bound session remediation is now implemented across all discovered protected admin API routes.
 2. Customer login, customer registration, and admin login depend on a raw PostgreSQL `RateLimit` table that is not represented in the Prisma schema. The helper intentionally fails closed when its database operation fails. The deployed table's actual presence and structure have not been verified.
+3. Admin/customer API authorization source review found no confirmed ownership bypass or uncovered protected admin API endpoint. Runtime tests remain outstanding.
 
 These are source-level findings. No production database was queried, and no live authentication flow was exercised.
 
@@ -39,7 +40,7 @@ No customer password-change endpoint was found in the inspected API tree. Custom
 - The upsert is atomic for concurrent requests sharing a key. It starts a 15-minute window, increments the count within that window, and caps the stored count at six (one beyond the five allowed attempts).
 - A request is allowed only while the returned count is at most five. The helper returns the remaining attempts and reset duration.
 - Expired records are reset when the same key is used again. No scheduled cleanup or global expired-row cleanup was found in the inspected helper/script.
-- `resetRateLimit` deletes the key after a successful customer/admin login. Errors in this deletion are caught and logged but not propagated, so a successful login can leave the old counter in place until its window expires or a later reset succeeds.
+- `resetRateLimit` deletes the key after a successful customer/admin login. Errors in this deletion are caught and logged but not propagated, so a successful login can leave the counter in place until its window expires or a later reset succeeds.
 - Customer login uses `login:<normalized-email>`.
 - Admin login uses `admin-login:<normalized-email>`.
 - Customer registration uses `register:<IP>`. The IP is selected from the first `x-forwarded-for` value, falling back to `x-real-ip`, then `unknown`. The source comment itself notes that proxy configuration must be trusted; whether the deployed proxy sanitizes these headers was not established by this source-only audit.
@@ -75,15 +76,6 @@ Do not run `scripts/create-ratelimit-table.js`, `CREATE TABLE`, migrations, `db 
 - No SQL, database query, seed, or table-creation script was run.
 - No environment variables or secrets were read or changed.
 - No production deployment, merge, or promotion was performed.
-
-## Next audit sequence
-
-1. Obtain explicit approval for a read-only inspection of the deployed `RateLimit` table, or use the database provider's read-only schema viewer.
-2. Review SEC-03 customer API ownership checks and remaining authorization boundaries.
-3. Review SEC-04 security headers and CSP feasibility.
-4. Correct the admin settings page's six-versus-twelve character validation copy as a separate focused UI change.
-5. Continue the core commerce authorization and checkout audit.
-
 
 ## SEC-03 — Admin and customer API authorization review
 
@@ -131,3 +123,39 @@ Read-only review of the complete discovered `src/app/api/**` route tree, the sha
 
 **No confirmed customer order-ownership bypass or uncovered protected admin API endpoint was found in the inspected tree.** The middleware cookie-presence check is not sufficient by itself, but the reviewed admin APIs perform their own shared session validation. This item is source-audited; runtime tests remain outstanding. No code fix is justified by the evidence in this audit.
 
+## SEC-04 — Security headers and Content Security Policy feasibility
+
+### Scope inspected
+
+Read-only inspection of `next.config.mjs`, `src/middleware.ts`, root layout, global CSS, homepage, banner/product sliders, header/footer, WhatsApp link component, image configuration, and the recursive application source tree at commit `1beda00edfb6afdee036f876a5fb8ed5a5284767`.
+
+### Existing protections
+
+`next.config.mjs` already applies these response headers to `/:path*`:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+The admin middleware also sets `Cache-Control: no-store, must-revalidate`. No duplicate or conflicting header configuration was found in the inspected `vercel.json` or middleware source.
+
+### Gaps and CSP constraints
+
+- No `Strict-Transport-Security` header is currently configured in `next.config.mjs`. The deployed site is served through Vercel HTTPS; HSTS is a reasonable focused hardening addition, but should be applied only to HTTPS responses and should not include `preload` without a separate domain/subdomain readiness decision.
+- No Content Security Policy is currently configured.
+- A strict CSP cannot safely be guessed from the current source. Next.js App Router emits framework scripts; the root layout uses `next/font/google` (font files are normally self-hosted in the build output); the banner and product components render image URLs supplied dynamically by stored records; Next image configuration currently allowlists Unsplash hosts, while the ordinary `img` elements can load other record-provided URLs.
+- The WhatsApp component navigates to `https://wa.me`; this is a top-level link rather than an embedded frame. No third-party script tag or embedded third-party iframe was found in the inspected root layout and key storefront components.
+- The WhatsApp button uses an inline style attribute. A strict style policy would need to account for inline style attributes; Next.js script execution would need a nonce/hash strategy or carefully justified directives. No nonce propagation is currently implemented in middleware.
+- The database-backed banner/product image host inventory is not known from source inspection alone. Adding a restrictive `img-src` policy now could silently break stored images.
+
+### Conclusion and safe next steps
+
+**Existing baseline headers are present; HSTS is a confirmed omission. CSP is not ready for enforcement based on the current evidence.**
+
+1. Add HSTS as a separate, focused configuration change with a one-year max-age; do not add `includeSubDomains` or `preload` without verifying all relevant domains.
+2. Before CSP enforcement, inventory actual production/Preview image origins and any future third-party integrations. Then design a nonce-aware Next.js CSP or a carefully scoped report-only rollout.
+3. Do not use `unsafe-eval` or a broad `unsafe-inline` policy as a shortcut. Do not block existing dynamic image hosts based only on the current static allowlist.
+4. Verify actual response headers on the Preview after the HSTS change. This source audit does not claim a live header test.
+
+No CSP or header code was changed during this audit.
