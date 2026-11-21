@@ -29,8 +29,8 @@ const settingsSchema = z.object({
     .string()
     .max(1024)
     .optional()
-    .refine((value) => value === undefined || value.length >= 6, {
-      message: "New password must be at least 6 characters",
+    .refine((value) => value === undefined || value.length >= 12, {
+      message: "New password must be at least 12 characters",
     }),
 });
 
@@ -127,7 +127,7 @@ export async function PATCH(request: Request) {
     }
 
     if (newPassword) {
-      updateData.password = await bcrypt.hash(newPassword, 10);
+      updateData.password = await bcrypt.hash(newPassword, 12);
     }
 
     if (Object.keys(updateData).length === 0) {
