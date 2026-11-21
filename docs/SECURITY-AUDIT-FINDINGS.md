@@ -83,3 +83,51 @@ Do not run `scripts/create-ratelimit-table.js`, `CREATE TABLE`, migrations, `db 
 3. Review SEC-04 security headers and CSP feasibility.
 4. Correct the admin settings page's six-versus-twelve character validation copy as a separate focused UI change.
 5. Continue the core commerce authorization and checkout audit.
+
+
+## SEC-03 — Admin and customer API authorization review
+
+### Scope inspected
+
+Read-only review of the complete discovered `src/app/api/**` route tree, the shared customer/admin session helpers, and `src/middleware.ts`. No requests were sent to authenticated endpoints and no database operations were performed.
+
+### Findings
+
+**Admin API authorization**
+
+- All discovered protected admin data/mutation endpoints use `getValidAdminSession()`: banners collection and item mutations, orders collection and item routes, products collection and item routes, stats, settings, and admin session introspection.
+- The shared helper validates the encrypted session's admin ID and stored password hash against the current `AdminUser.password` value in the database.
+- Admin login is intentionally public because it creates the session. Admin logout is intentionally accessible so it can destroy a session even when stale.
+- No uncovered protected admin API route was found in the current recursive API tree.
+
+**Customer API authorization and ownership**
+
+- `GET /api/orders` and `POST /api/orders` both require a customer session with `isLoggedIn` and `userId`.
+- Order listing is filtered by `customerId: session.userId`.
+- `GET /api/orders/[id]` requires a customer session and explicitly compares the fetched order's `customerId` with the session user ID, returning 403 for a different owner.
+- `PATCH /api/auth/update-profile` requires a customer session and updates only the record addressed by `session.userId`; client input cannot choose a customer ID.
+- `GET /api/auth/me` returns only a limited customer projection and destroys the session if its customer record no longer exists.
+- Customer login/register intentionally create a session; logout intentionally destroys it without requiring an existing valid session.
+- No direct customer ownership bypass was identified in these inspected routes.
+
+**Public read endpoints**
+
+- `GET /api/products`, `GET /api/products/[slug]`, and `GET /api/banners` are public catalogue/banner endpoints. The product endpoints filter to active products; the banner endpoint filters to active banners.
+- These are expected public storefront reads, not admin mutation endpoints.
+
+**Middleware boundary**
+
+- `src/middleware.ts` protects the `/admin/:path*` page area by checking whether the admin cookie exists. It does not cryptographically validate the cookie or authorize API requests.
+- This is only a page-navigation gate. It must not be treated as the security boundary. Protected API routes must continue to call `getValidAdminSession()` directly; the reviewed protected admin APIs do so.
+- Middleware sets `Cache-Control: no-store, must-revalidate` on matched admin pages and on the non-admin/login pass-through path.
+
+### Remaining limitations / follow-up
+
+- Customer sessions are not currently bound to the customer's current password hash. No customer password-change endpoint was found, so password-change revocation is not an available workflow today. If customer password changes or account disable/delete functionality is added, session invalidation must be designed as part of that feature.
+- The review is source-only. It does not prove runtime authorization behavior under forged cookies, stale cookies, concurrency, or deployed configuration.
+- Consider a future dedicated automated test suite covering unauthenticated access, customer A attempting to read customer B's order, valid owner access, stale/deleted customer sessions, and all admin API methods. No such test execution is claimed here.
+
+### SEC-03 conclusion
+
+**No confirmed customer order-ownership bypass or uncovered protected admin API endpoint was found in the inspected tree.** The middleware cookie-presence check is not sufficient by itself, but the reviewed admin APIs perform their own shared session validation. This item is source-audited; runtime tests remain outstanding. No code fix is justified by the evidence in this audit.
+
