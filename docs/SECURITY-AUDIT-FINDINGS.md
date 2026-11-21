@@ -242,3 +242,46 @@ No CSP or header code was changed during this audit.
 - No admin UI or API code was modified.
 - No Prisma schema, migration, SQL, database, or environment configuration was changed.
 - No production deployment, merge, or promotion was performed.
+
+
+## COM-03 — Delivery fee and pincode behavior audit
+
+**Inspected branch:** `chore/security-hardening` at the current audit commit.  
+**Scope:** Read-only inspection of `src/lib/config.ts`, cart and checkout pages, `POST /api/orders`, and the discovered `src/app/api/**` route tree. No delivery quote was requested from an external carrier, no order was placed, and no database was queried or changed.
+
+### Current delivery rules
+
+- `src/lib/config.ts` declares `deliveryConfig.areas: ["All India"]`, `fee: 50`, and `freeAbove: 500`.
+- Cart UI displays free delivery when subtotal is ₹500 or more; otherwise it displays ₹50. An empty cart is explicitly shown with zero delivery fee.
+- Checkout UI calculates ₹0 delivery at ₹500 or more and ₹50 below ₹500.
+- The order API independently recalculates the fee from the database-derived subtotal: ₹0 at ₹500 or more and ₹50 below ₹500. Client-supplied subtotal, delivery fee, and total are not trusted.
+- Therefore the currently inspected UI/API calculations agree on the ₹500 threshold and ₹50 fee. The API remains authoritative for persisted orders.
+
+### Pincode and serviceability behavior
+
+- Checkout collects a pincode as a required text field.
+- The server Zod schema trims it and accepts exactly six numeric digits (`/^\d{6}$/`). This is format validation only.
+- No postal lookup, pincode-to-city/state verification, delivery-zone lookup, carrier serviceability API, shipping-rate API, or pincode-specific fee rule was found in the inspected application API tree.
+- The `areas: ["All India"]` setting is descriptive configuration; the checkout/order API does not consult it to determine serviceability.
+- The submitted city, state, and pincode are stored as customer-entered address fields. The inspected order route does not cross-check that they correspond to one another.
+- No pincode autofill or serviceability feedback is implemented in the inspected checkout page.
+
+### Findings and risks
+
+1. **No actual pincode serviceability check exists in the inspected flow.** A syntactically valid six-digit pincode can be submitted regardless of whether the business/carrier can deliver there. The “All India” configuration does not enforce coverage.
+2. **City/state/pincode consistency is not verified.** Customer-entered city and state can disagree with the pincode. This is an address-quality/fulfilment risk, not a pricing-integrity bypass.
+3. **Delivery fee is duplicated in four places.** Config declares the values, while cart, checkout, and API each contain fee/threshold logic. They currently match, but future edits can drift. Centralizing the constants would reduce maintenance risk; any change must preserve the existing ₹50 below ₹500 / free at ₹500+ business rule.
+4. **No location-specific delivery surcharge or exclusion is implemented.** The current behavior is one flat fee/free-threshold rule; do not infer carrier coverage or promise universal delivery from the configuration label alone.
+5. **Pincode validation accepts only ASCII digits.** This is a format constraint, not proof that the postal code exists or is serviceable. No validation change is proposed in this audit.
+
+### COM-03 conclusion
+
+**The current rule is a flat ₹50 delivery fee below ₹500 and free delivery at/above ₹500, with no pincode-based serviceability or location-specific pricing logic found in the inspected source.** UI and server calculations match today; server-side pricing remains authoritative. The principal gaps are missing delivery-coverage verification, no city/state/pincode consistency check, and duplicated fee constants. No runtime carrier integration or real-world delivery coverage was tested.
+
+### Explicit non-actions
+
+- No delivery fee, threshold, coverage, or address rule was changed.
+- No postal lookup or carrier provider was integrated.
+- No customer address or order was created or modified.
+- No database query, SQL, migration, seed, or schema change was performed.
+- No production deployment, merge, or promotion was performed.
