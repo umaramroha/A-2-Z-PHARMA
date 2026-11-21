@@ -1,26 +1,8 @@
 import { NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { adminSessionOptions } from "@/lib/adminSession";
-
-type AdminSessionData = {
-  adminId?: string;
-  email?: string;
-  role?: string;
-  isAdminLoggedIn: boolean;
-};
-
-async function getAdminSession() {
-  const cookieStore = await cookies();
-  const session = await getIronSession<AdminSessionData>(
-    cookieStore,
-    adminSessionOptions
-  );
-  return session;
-}
+import { getValidAdminSession } from "@/lib/adminSession";
 
 const settingsSchema = z.object({
   currentPassword: z.string().min(1).max(1024),
@@ -46,9 +28,9 @@ function isUniqueConstraintError(error: unknown) {
 // GET current admin info
 export async function GET() {
   try {
-    const session = await getAdminSession();
+    const session = await getValidAdminSession();
 
-    if (!session.isAdminLoggedIn || !session.adminId) {
+    if (!session || !session.adminId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -75,9 +57,9 @@ export async function GET() {
 // PATCH — update email and/or password
 export async function PATCH(request: Request) {
   try {
-    const session = await getAdminSession();
+    const session = await getValidAdminSession();
 
-    if (!session.isAdminLoggedIn || !session.adminId) {
+    if (!session || !session.adminId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -143,10 +125,9 @@ export async function PATCH(request: Request) {
       select: { id: true, email: true, role: true },
     });
 
-    if (updateData.email) {
-      session.email = updated.email;
-      await session.save();
-    }
+    if (updateData.email) session.email = updated.email;
+    if (updateData.password) session.passwordHash = updateData.password;
+    if (updateData.email || updateData.password) await session.save();
 
     return NextResponse.json({ success: true, admin: updated });
   } catch (error) {
