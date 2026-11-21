@@ -1,29 +1,11 @@
 import { NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { adminSessionOptions } from "@/lib/adminSession";
-
-type AdminSessionData = {
-  adminId?: string;
-  email?: string;
-  role?: string;
-  isAdminLoggedIn: boolean;
-};
-
-async function isAdmin() {
-  const cookieStore = await cookies();
-  const session = await getIronSession<AdminSessionData>(
-    cookieStore,
-    adminSessionOptions
-  );
-  return session.isAdminLoggedIn && session.adminId;
-}
+import { getValidAdminSession } from "@/lib/adminSession";
 
 // GET all orders
 export async function GET() {
   try {
-    if (!(await isAdmin())) {
+    if (!(await getValidAdminSession())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
