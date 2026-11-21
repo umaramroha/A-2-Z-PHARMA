@@ -197,3 +197,48 @@ No CSP or header code was changed during this audit.
 - No database query, SQL, migration, seed, or schema change was performed.
 - No payment settings, credentials, or production configuration were changed.
 - No production deployment, merge, or promotion was performed.
+
+
+## COM-02 — COD/UPI and order/payment status transition audit
+
+**Inspected commit:** `31fdbdf616a9bd78d488e0f9da57be1a79857ac0`  
+**Scope:** Read-only inspection of checkout payment UI, order-creation API, admin order detail API, admin orders UI, and Prisma Order schema. No payment was made, no order was updated, and no database was queried or changed.
+
+### Current state model
+
+- New orders are created with order `status: PENDING` and `paymentStatus: PENDING`, regardless of whether the selected method is `cod` or `upi`.
+- The server explicitly does not treat UPI selection as proof of payment.
+- Admin order status transitions are monotonic through `PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED`; cancellation is allowed only from `PENDING`, `CONFIRMED`, or `PROCESSING`. `DELIVERED` and `CANCELLED` are terminal for order status.
+- Payment transitions implemented in the API are `PENDING → PAID` or `FAILED`, `FAILED → PENDING`, and `PAID → REFUNDED`. `REFUNDED` is terminal.
+- Admin PATCH requests validate the requested values and perform a compare-and-set update inside a Prisma transaction. If the stored order/payment state changed concurrently, the request returns a conflict rather than blindly overwriting it.
+- Cancellation restores each ordered product's stock in the same transaction as the order status change. The compare-and-set guard prevents two concurrent status updates from both winning and restoring stock twice.
+- The current admin orders page exposes order-status buttons only. It displays payment status as read-only text; there is no visible payment-status control in this page.
+
+### Findings and risks
+
+1. **UPI is not actually payable through the current checkout UI.** The option is labelled “UPI Payment (QR Code)” and tells the customer to scan a QR code, but the QR area explicitly says the code will be added after payment integration. The page then says “After payment, place your order below.” No QR, UPI intent, payment provider, transaction reference, or server-side payment verification flow was found in the inspected checkout/API source. The API correctly leaves the order payment status pending. This is a confirmed incomplete checkout experience; customers should not be led to believe a payment was accepted or verified.
+2. **Payment transitions are not constrained by payment method.** The same API transition function applies to COD and UPI. Source does not prevent a COD order from being marked `PAID`/ `REFUNDED`, nor require a UPI-specific verification step before `PAID`. Admin authentication is required, but no method-specific invariant exists.
+3. **Order and payment states are not cross-validated.** The PATCH schema allows an order status and payment status to be changed independently. The code does not prevent marking a cancelled order paid, marking a delivered order refunded without a defined refund workflow, or cancelling a paid order without simultaneously recording a refund. These combinations may be operationally legitimate in some businesses, but the current rules do not define them.
+4. **The UI does not provide payment-status management.** The admin page can change order status but only displays payment status. The API supports payment-status changes, but no control in the inspected page exposes them. This creates a gap between API capability and the normal admin workflow.
+5. **No payment evidence/audit trail is stored in the Order model.** The schema has payment method and status only; no transaction/reference ID, provider event ID, paid-at timestamp, refund reference, or status-history model was found. This limits independent reconciliation of manual UPI receipts and refunds. No schema change is proposed without explicit approval.
+6. **No gateway callback or webhook path was identified in the inspected API route tree.** This supports the conclusion that there is no automated payment verification in the current implementation; it does not rule out out-of-band/manual confirmation by the business.
+
+### COM-02 conclusion
+
+**The backend has guarded, transactional status transitions and protects against concurrent duplicate cancellation stock restoration. However, payment handling is only a basic manually administered status field, not a payment integration.** The UPI checkout UI presents a QR payment step that is not implemented. The API also lacks payment-method and cross-state invariants, while the admin page does not expose payment status controls. These are source-level findings; no runtime payment or refund tests were performed.
+
+### Recommended next steps (audit only; no implementation authorized here)
+
+- Decide whether UPI should remain temporarily unavailable, be clearly presented as “manual payment — contact us for details,” or be integrated with a real provider after business/provider details are supplied.
+- Define allowed COD and UPI state transitions separately, including what proof is required before marking an order paid.
+- Define whether a paid order may be cancelled and how refunds are represented; define whether delivered orders can be refunded.
+- Add a visible, authenticated admin payment workflow only after those business rules are confirmed.
+- Consider an auditable payment-reference/history design only with explicit schema-change approval.
+
+### Explicit non-actions
+
+- No payment provider, QR code, UPI ID, webhook, or credentials were added.
+- No order/payment state was changed.
+- No admin UI or API code was modified.
+- No Prisma schema, migration, SQL, database, or environment configuration was changed.
+- No production deployment, merge, or promotion was performed.
