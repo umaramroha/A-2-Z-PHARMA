@@ -84,8 +84,9 @@ export async function POST(request: Request) {
       },
     });
 
+    const cookieStore = await cookies();
     const session = await getIronSession<SessionData>(
-      cookies(),
+      cookieStore,
       sessionOptions
     );
     session.userId = customer.id;
