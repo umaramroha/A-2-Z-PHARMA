@@ -159,3 +159,41 @@ The admin middleware also sets `Cache-Control: no-store, must-revalidate`. No du
 4. Verify actual response headers on the Preview after the HSTS change. This source audit does not claim a live header test.
 
 No CSP or header code was changed during this audit.
+
+
+## COM-01 — Checkout and order creation audit
+
+**Inspected commit:** `434d270ccb6df94a90c4f74f92ff22833164600b`  
+**Scope:** Read-only source trace of checkout UI, cart state, customer session, order API, product/order schema, and delivery configuration. No live order was placed and no database was queried or changed.
+
+### Verified protections
+
+- `POST /api/orders` requires an authenticated customer session and derives `customerId` from `session.userId`; the client cannot choose the order owner.
+- The server validates customer name, mobile, optional email, address, city, state, six-digit pincode, payment method, and item array with Zod. Item count is limited to 1–50 and each submitted quantity to 1–100.
+- The server ignores client-supplied prices, subtotal, delivery fee, and total. It fetches active products and calculates each line from the current database price.
+- Duplicate product IDs are merged before stock validation. The combined quantity for one product cannot exceed 100.
+- Product availability and stock are checked inside a Prisma transaction. Stock is decremented using a conditional `updateMany` predicate requiring the product to remain active and have sufficient stock; a failed decrement throws and rolls back the transaction.
+- Order creation and stock decrement occur in the same transaction. The persisted order stores the server-calculated subtotal, delivery fee, and total, plus product prices copied from the database.
+- The current target business rule is consistent in the checkout UI, cart UI, server API, and `src/lib/config.ts`: delivery is ₹50 below ₹500 and free at ₹500 or above. The API is authoritative.
+- The server sets new orders to `PENDING` and payment status to `PENDING`. It does not mark UPI orders paid merely because the customer selected UPI.
+- Invalid input returns 400; unavailable/inactive products and insufficient stock return 409. The customer order list is scoped to the authenticated user, and the order-detail route checks ownership.
+
+### Findings and risks
+
+1. **No server-side idempotency protection was found.** The checkout button is disabled while the browser's request is in flight, but that is only a client-side guard. A repeated request, retry after a lost response, or two concurrent requests can create two separate orders (and reserve stock twice) if stock remains available. This is a duplicate-order risk, not a price/stock bypass. Consider a future idempotency design before adding automatic retries or payment callbacks; do not add a schema field or database constraint without approval.
+2. **UPI is currently a manual/pending workflow, not a verified online payment.** The checkout screen displays placeholder text that the QR code will be added later, yet allows the customer to place an order with `paymentMethod: "upi"`. The API correctly leaves `paymentStatus: "PENDING"`. The UI must not imply that payment has been received. Actual payment confirmation and admin/manual status transitions belong in COM-02.
+3. **Mobile validation is syntactic, not a strict digit-count check.** The API permits 10–20 characters from digits, plus, parentheses, spaces, and hyphens, but does not verify a meaningful number of digits or normalize the number. This can accept malformed values made mostly of punctuation. A future validation improvement should preserve legitimate Indian/international formats and be tested before implementation.
+4. **Delivery rule values are duplicated in source.** The same ₹50 / ₹500 rule currently matches `src/lib/config.ts`, cart, checkout, and API, but UI and server literals can drift during future changes. The server-side calculation remains authoritative. Centralization can be considered as a focused maintenance change after COM-03 confirms all delivery edge cases.
+5. **The checkout form sends extra client fields** (`price`, `subtotal`, `deliveryFee`, `total`) that the server does not trust or use. This is not currently an integrity vulnerability because server values are recalculated, but the unused payload is unnecessary and can be cleaned up separately after confirming no compatibility dependency.
+
+### COM-01 conclusion
+
+**Server-side pricing, active-product checks, stock reservation, customer ownership, and atomic order persistence are implemented in the inspected source.** No client-price manipulation or direct inactive-product purchase path was identified in this order-creation route. The main confirmed commerce risks are duplicate order submissions without server idempotency and the unfinished/manual UPI presentation; phone-number validation is comparatively weak. Runtime concurrency, duplicate-submit, and real payment tests were not performed.
+
+### Explicit non-actions
+
+- No checkout or API code was changed.
+- No order was created and no stock was reserved.
+- No database query, SQL, migration, seed, or schema change was performed.
+- No payment settings, credentials, or production configuration were changed.
+- No production deployment, merge, or promotion was performed.
