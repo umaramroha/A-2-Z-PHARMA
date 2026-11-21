@@ -6,7 +6,7 @@
 
 | ID | Task | Status | Acceptance / safety boundary |
 |---|---|---|---|
-| SEC-01 | Review admin and customer session invalidation after password changes | Pending audit | Trace session creation, password update, and every protected API/page. Propose a backward-compatible fix only if a concrete weakness is confirmed. No schema/DB changes without approval. |
+| SEC-01 | Review admin and customer session invalidation after password changes | Admin implementation complete; customer password-change flow not present | Admin login stores the current password hash in the encrypted session; all discovered protected admin API routes validate it against the current database hash. Password updates rotate the current session hash, invalidating older sessions. No customer password-change endpoint was found, so customer password-change invalidation remains unverified. No schema/DB changes. |
 | SEC-02 | Audit rate-limit implementation and its database dependency | Pending audit | Inspect callers, raw SQL, failure behavior, and schema mismatch. Do not query or mutate production DB; do not create the missing table/model without approval. |
 | SEC-03 | Review authorization on admin and customer API routes | Pending audit | Verify server-side session/ownership checks, not merely middleware cookie presence. Report confirmed gaps before focused fixes. |
 | SEC-04 | Review security headers and CSP feasibility | Pending audit | Inventory scripts, styles, images, and external services before any CSP change. Avoid breaking Next.js runtime. |
