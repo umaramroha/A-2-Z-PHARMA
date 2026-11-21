@@ -1,25 +1,12 @@
 import { NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
+import { getValidAdminSession } from "@/lib/adminSession";
 import { prisma } from "@/lib/prisma";
-import { adminSessionOptions } from "@/lib/adminSession";
-
-type AdminSessionData = {
-  adminId?: string;
-  email?: string;
-  role?: string;
-  isAdminLoggedIn: boolean;
-};
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const session = await getIronSession<AdminSessionData>(
-      cookieStore,
-      adminSessionOptions
-    );
+    const session = await getValidAdminSession();
 
-    if (!session.isAdminLoggedIn || !session.adminId) {
+    if (!session?.adminId) {
       return NextResponse.json({ admin: null });
     }
 
@@ -34,7 +21,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ admin });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin me error:", error);
     return NextResponse.json({ admin: null }, { status: 500 });
   }
