@@ -21,8 +21,9 @@ function isPrismaRecordNotFound(error: unknown) {
 
 export async function PATCH(request: Request) {
   try {
+    const cookieStore = await cookies();
     const session = await getIronSession<SessionData>(
-      cookies(),
+      cookieStore,
       sessionOptions
     );
 
