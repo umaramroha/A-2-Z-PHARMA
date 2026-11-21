@@ -4,15 +4,9 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { adminSessionOptions } from "@/lib/adminSession";
+import { adminSessionOptions, type AdminSessionData } from "@/lib/adminSession";
 import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
 
-type AdminSessionData = {
-  adminId?: string;
-  email?: string;
-  role?: string;
-  isAdminLoggedIn: boolean;
-};
 
 const loginSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -80,6 +74,7 @@ export async function POST(request: Request) {
     session.adminId = admin.id;
     session.email = admin.email;
     session.role = admin.role;
+    session.passwordHash = admin.password;
     session.isAdminLoggedIn = true;
     await session.save();
 
