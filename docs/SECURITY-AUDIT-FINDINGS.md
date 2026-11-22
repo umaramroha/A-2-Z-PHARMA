@@ -285,3 +285,58 @@ No CSP or header code was changed during this audit.
 - No customer address or order was created or modified.
 - No database query, SQL, migration, seed, or schema change was performed.
 - No production deployment, merge, or promotion was performed.
+
+
+
+## COM-04 — Cancellation, ownership, and stock restoration audit
+
+**Inspected branch:** `chore/security-hardening` at commit `9e1320cde9c5710fcdc7c65fcab690b98bc56e30`.  
+**Scope:** Read-only inspection of the complete discovered `src/app/api/**` route tree, customer order list/detail pages, admin order page, customer/admin order APIs, product delete API, and Prisma Order/OrderItem/Product relations. No endpoint was called, no order was changed, and no database was queried or modified.
+
+### Cancellation paths and ownership
+
+- The customer API route `GET /api/orders/[id]` is read-only. It requires a logged-in customer session, loads the order, and explicitly compares `order.customerId` to `session.userId`; a non-owner receives 403.
+- `GET /api/orders` requires a customer session and filters records by `customerId: session.userId`.
+- The customer-facing `/orders` list and `/orders/[id]` detail pages show order status/tracking but contain no cancellation action or customer cancellation request.
+- The complete discovered API route tree contains no customer cancellation endpoint and no other customer order mutation route.
+- The only discovered cancellation path is the authenticated admin `PATCH /api/admin/orders/[id]` route, with `status: "CANCELLED"`.
+- The admin collection and detail APIs both require `getValidAdminSession()`. The detail PATCH validates the admin session before parsing or changing the order.
+
+### Admin transition and concurrency safeguards
+
+- The API permits cancellation only when the current order status is `PENDING`, `CONFIRMED`, or `PROCESSING`. `SHIPPED`, `DELIVERED`, and `CANCELLED` cannot transition to `CANCELLED`; `DELIVERED` and `CANCELLED` are terminal in the order-state transition function.
+- The requested state is checked against the current database state inside a Prisma transaction.
+- Before restoring stock, the handler performs a compare-and-set `order.updateMany` constrained by the current order ID, current order status, and current payment status. If another request has already changed either state, the update count is not one and the transaction aborts with a conflict.
+- Stock restoration happens only after the guarded order update succeeds, and in the same transaction. Each order item increments its linked product stock by the purchased quantity.
+- Consequently, for the inspected code path, a repeated or concurrent cancellation cannot successfully pass the same current-state compare-and-set twice and restore stock twice. If any product update fails, the transaction is expected to roll back the order-state change and any earlier stock increments.
+- The API returns 409 for invalid transitions and compare-and-set conflicts; it returns 404 when the order does not exist.
+- The payment state is included in the compare-and-set predicate even when only order status is being changed. This is conservative and prevents overwriting a concurrent payment-state update.
+
+### Product/order relationship and deletion behavior
+
+- Prisma schema defines `OrderItem.productId` as a required relation to `Product` with no `onDelete: Cascade` on the product relation. Order items themselves cascade when their parent order is deleted.
+- The admin product DELETE route checks whether any OrderItem references the product. If so, it soft-deletes by setting `isActive: false` and retains the product row and its historical order relation.
+- If no order item references the product, the route hard-deletes it.
+- This behavior preserves the product record needed by historical order items, so normal admin product deletion should not remove a product referenced by an existing order.
+- No stock restoration occurs when a product is deactivated; that is appropriate for cancellation accounting because the product remains available as a database row and stock is restored only by the cancellation transaction.
+
+### Findings and risks
+
+1. **No customer self-service cancellation workflow exists.** Customers can view their orders but cannot request cancellation through the inspected storefront or API. Cancellation is admin-only. This is a product/operations limitation, not an ownership bypass. Whether customer cancellation should be offered is a business-policy decision, especially after confirmation or processing.
+2. **Admin status controls show all statuses regardless of current state.** The admin page renders buttons for every status, including transitions the server will reject (for example, cancelling a shipped/delivered order or moving a terminal order). The API correctly enforces the state machine, but the UI does not pre-filter allowed transitions.
+3. **Admin UI does not surface failed status-update responses.** The client only updates its local order state when `res.ok`; non-OK responses such as 409 are otherwise silently ignored. An admin may not understand why a status action did not apply. This is a usability/operational feedback gap; the server remains authoritative.
+4. **Cancellation does not create a separate audit/history record.** The inspected schema stores the current status and timestamps only; no status-history or cancellation-reason model/field was found. This limits later review of who cancelled an order and why. Adding history/reason fields would require a separate business/schema decision and explicit approval.
+5. **Cancellation policy is status-based, not payment-method/payment-state-aware.** As also noted in COM-02, the same order cancellation transition applies regardless of COD/UPI and does not coordinate a refund if payment status is already PAID. No payment refund behavior should be inferred from a successful cancellation.
+6. **No live concurrency or rollback test was performed.** The compare-and-set and transaction structure are visible in source, but actual database isolation, lock behavior, and rollback under failure have not been exercised in a test environment.
+
+### COM-04 conclusion
+
+**Source review found no customer order-ownership bypass in the inspected read routes. Cancellation is admin-only, and the admin cancellation path uses a transactional compare-and-set guard before restoring stock, preventing the same order from winning cancellation twice in the inspected logic.** Product deletion preserves products referenced by order items through soft deactivation. Remaining gaps are the absence of customer cancellation, admin UI transition/error feedback, no cancellation audit history, and no payment/refund coordination. Runtime concurrency and rollback behavior remain unverified.
+
+### Explicit non-actions
+
+- No customer cancellation endpoint or UI was added.
+- No order status, payment status, product stock, or product active state was changed.
+- No Prisma schema, migration, SQL, database query, or database write was performed.
+- No cancellation reason, status history, or payment/refund policy was invented.
+- No production deployment, merge, or promotion was performed.
