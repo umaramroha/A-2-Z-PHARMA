@@ -46,8 +46,8 @@ These features are reference-only observations, not approved requirements. Do no
 
 | ID | Task | Status | Acceptance / safety boundary |
 |---|---|---|---|
-| QA-01 | Audit ESLint configuration and scripts | Pending audit | Confirm the actual config and whether `pnpm lint` is a reliable gate before changing CI. |
-| QA-02 | Establish a safe TypeScript check | Pending audit | Verify current compiler configuration and use `npx tsc --noEmit` where dependencies are available. |
+| QA-01 | Audit ESLint configuration and scripts | Source audit complete; lint configuration remediation pending | `package.json` has `lint: eslint .` and ESLint 8.57 / eslint-config-next 15.5.29 dependencies, but no tracked ESLint config or ignore file exists. The standalone `pnpm lint` command was not run, so its exit status remains unverified and it must not be treated as a passing gate. Next.js Preview build did report its lint/type-check phase successful. Findings: `docs/QA-AUDIT-FINDINGS.md`. Next: choose a compatible minimal config, then run and record the standalone lint command before marking remediation complete. |
+| QA-02 | Establish a safe TypeScript check | Compiler configuration audited; standalone command execution pending | `tsconfig.json` has `strict: true` and `noEmit: true`; Vercel Preview build's Next.js type-check phase completed successfully. Run and record `npx tsc --noEmit` with installed dependencies when available. |
 | QA-03 | Add focused tests for critical business flows | Pending design | Choose test tooling only after inspecting current dependencies; no DB mutation or production data. |
 | QA-04 | Add GitHub Actions CI | Pending audit | Inspect existing workflows first; run read-only checks only and avoid duplicate/unnecessary dependencies. |
 
