@@ -388,7 +388,7 @@ export default function AdminProductsPage() {
             No products yet
           </h2>
           <p className="text-gray-500 mb-6">
-            Pehla product add karne ke liye "Add Product" dabao.
+            Pehla product add karne ke liye &quot;Add Product&quot; dabao.
           </p>
           <button
             onClick={handleNew}
