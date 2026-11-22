@@ -50,3 +50,46 @@ These findings are an implementation/source audit, not legal advice or a determi
 - No business identity, address, contact detail, licence, delivery, payment, cancellation, return, or refund rule was changed.
 - No application code, database, environment variable, or production setting was changed.
 - No production deployment, merge, or promotion was performed.
+
+## OPS-02 — Password recovery and email verification
+
+**Audit branch:** `chore/security-hardening`  
+**Inspected source state:** commit `fb24f732edb13c61d68d9b4dcb30ff27ba2975f0`  
+**Scope:** Read-only inspection of the tracked App Router route tree, customer login/registration pages and API routes, AuthContext, session helper, Prisma Customer model, package dependencies, and tracked repository filenames. No provider settings, secret values, database, or application code were changed.
+
+### Confirmed source findings
+
+- The tracked `src/app` route tree contains login and registration pages, but no forgot-password, reset-password, verify-email, or verification-callback page.
+- The tracked `src/app/api/auth` route tree contains login, logout, current-user, registration, and profile-update endpoints only. No password-reset request/consume endpoint or email-verification endpoint was found.
+- Customer registration creates the Customer row with a bcrypt password hash and immediately creates an authenticated customer session. There is no pending-verification state or email-confirmation gate in the inspected registration flow.
+- Login validates the supplied email/password and creates a session after password comparison. No verified-email condition is checked.
+- The Prisma `Customer` model contains identity, email, mobile, password hash, creation timestamp, and order relation only. No email verification timestamp/status, verification token, password reset token, or token expiry fields were found.
+- `package.json` includes no dedicated email delivery/provider dependency (for example, Nodemailer or a transactional email SDK). No email utility/template module was found in the tracked source tree.
+- The tracked repository tree contains no `.env.example` or equivalent provider configuration template. This does not establish what environment variables may be configured in Vercel.
+- No email-verification or password-recovery implementation was found in the inspected source. No email was sent as part of the inspected registration/login flow.
+
+### Readiness gaps and boundaries
+
+1. Customers have no self-service password recovery route in the inspected application source. A forgotten password currently has no implemented recovery workflow.
+2. New customer accounts are not required by the inspected source to verify ownership of the supplied email address before receiving a logged-in session.
+3. There is no visible token lifecycle implementation for one-time use, expiry, invalidation, replay protection, or rate limiting specific to reset/verification requests.
+4. The presence, names, or validity of any provider credentials in Vercel environment settings were not inspected and remain **unverified**. No secret values were requested, retrieved, printed, or changed.
+5. No provider choice, sender identity, email template, delivery policy, or account-recovery business rule is established by the current source. Do not select a provider or invent these values.
+6. Adding these workflows may require schema and security design decisions (token storage/hash, expiry, single-use semantics, account enumeration protection, throttling, session invalidation, and email delivery failure handling). No schema change is authorized by this audit.
+
+### Safe next step
+
+Record the business/provider decision first: approved sender identity and support contact, preferred email provider, and whether verification is required before account access. Then prepare a design covering hashed single-use tokens, expiry, rate limits, generic responses to prevent account enumeration, session invalidation after password reset, and delivery-failure handling. Any schema migration, provider installation, environment/secret change, or behavior implementation must be separately approved before execution.
+
+### OPS-02 conclusion
+
+**OPS-02 source audit complete; password recovery and email verification are not implemented in the inspected source. Provider environment configuration remains unverified.** This is a source-code finding, not proof that no external provider account or Vercel secret exists.
+
+### Explicit non-actions
+
+- No email provider was selected or installed.
+- No environment variable or secret was inspected, exposed, added, or changed.
+- No database query, schema change, migration, SQL, or data write was performed.
+- No customer account, password, login, or registration behavior was changed.
+- No production deployment, merge, or promotion was performed.
+
