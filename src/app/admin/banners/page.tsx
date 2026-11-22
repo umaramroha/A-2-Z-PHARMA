@@ -329,7 +329,7 @@ export default function AdminBannersPage() {
       <div className="space-y-3">
         {banners.length === 0 && !showForm && (
           <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500">
-            Abhi koi banner nahi hai. Upar "+ Add New Banner" click karo.
+            Abhi koi banner nahi hai. Upar &quot;+ Add New Banner&quot; click karo.
           </div>
         )}
 
