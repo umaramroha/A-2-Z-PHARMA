@@ -39,7 +39,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">Browse by need</p>
             <h2 className="section-title mt-2">
-              Find what you're looking for
+              Find what you&apos;re looking for
             </h2>
             <p className="section-copy">
               Start with a category and discover products available through the
