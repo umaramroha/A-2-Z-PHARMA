@@ -93,3 +93,42 @@ Record the business/provider decision first: approved sender identity and suppor
 - No customer account, password, login, or registration behavior was changed.
 - No production deployment, merge, or promotion was performed.
 
+
+## OPS-03 — Product gallery and medicine information fields
+
+**Audit branch:** `chore/security-hardening`  
+**Inspected source state:** commit `81685d557d8c247c866e0aa7ec228a971d52bb3a`  
+**Scope:** Read-only inspection of the Prisma Product model, admin product page, admin product collection/item APIs, public product collection/detail APIs, product listing/detail UI, API route tree, package dependencies, and Next.js image configuration. No product records, database, schema, code, upload provider, or environment settings were changed.
+
+### Confirmed source findings
+
+- The Prisma `Product` model stores only: `name`, `slug`, `description`, `price`, `mrp`, one nullable `image` URL, `category`, `stock`, `isActive`, and timestamps, plus the order-item relation.
+- The admin product form exposes one free-text Image URL field with a small preview. It has no multi-image/gallery controls, upload picker, image ordering, primary-image selection, or delete/reorder action.
+- The product create/update APIs accept one optional `image` string (trimmed and limited to 2,048 characters). No dedicated product image upload endpoint or media-management route exists in the inspected API route tree.
+- The public product listing/detail types and UI consume a single `image` value. The detail page renders one main image; related/listing cards also use one image each. No gallery/carousel or alternate-image data is represented.
+- The inspected `package.json` has no Cloudinary SDK, image-upload SDK, or other dedicated media-storage dependency. The inspected `next.config.mjs` remote image patterns list Unsplash hosts only; current product UI uses ordinary `img` elements, so those patterns are not an upload or storage integration.
+- Product-specific descriptive data is currently limited to a free-text description and a category string. The category UI offers Male Problems, Female Problems, and General Problems. No structured fields were found for dosage/form, composition/ingredients, pack size/quantity, manufacturer, directions for use, warnings/contraindications, batch number, expiry date, or medicine licence details.
+- The product detail UI includes a static five-star row labelled “Verified product” and static trust claims such as “100% Authentic”. No product rating/review model or verification evidence field exists in the inspected Product schema. These labels are not dynamically backed by product-level review/verification records in the inspected source.
+- The public API returns the Product record and filters by active status; no transformation or separate gallery/medicine metadata source was found in the inspected routes.
+
+### Readiness gaps and decisions needed
+
+1. **Gallery requirement:** Current product management supports only one externally hosted image URL. Confirm whether A-2-Z needs multiple product images, and if so the expected maximum count, image roles (front/back/label), ordering, and primary image behavior.
+2. **Image storage:** Choose an approved storage/upload approach and ownership/account before implementation. Confirm allowed formats, maximum file size/dimensions, deletion behavior, and whether existing image URLs must remain valid. No provider or bucket should be selected by assumption.
+3. **Medicine information:** The owner/pharmacist/compliance lead must identify which structured fields are actually required for A-2-Z's product types and applicable rules. Do not invent dosage, composition, indications, contraindications, licence data, or medical advice.
+4. **Historical data and order safety:** Any future schema design must preserve existing product records, image URLs, order-item relations, and historical order display. No migration or data backfill was designed or run.
+5. **Trust labels:** Confirm evidence and approval for “Verified product”, five-star presentation, and “100% Authentic” before relying on them as factual claims. No ratings/verification implementation was added.
+6. **Scope:** This audit does not establish that every listed medicine field is legally required for every product. Requirements depend on product classification, licence, and applicable compliance review.
+
+### OPS-03 conclusion
+
+**OPS-03 source audit complete; gallery/storage and structured medicine-field requirements need an explicit business and compliance decision before implementation.** Current implementation is single-image URL + free-text description + broad category. No schema change is authorized by this audit.
+
+### Explicit non-actions
+
+- No product image, product record, order, or customer data was read from or written to the database.
+- No schema, migration, SQL, storage bucket, Cloudinary account, provider, or environment setting was created or changed.
+- No medicine directions, claims, ingredients, licence details, or other medical content were invented.
+- No product UI/API code or business behavior was changed.
+- No production deployment, merge, or promotion was performed.
+
