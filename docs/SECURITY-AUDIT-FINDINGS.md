@@ -340,3 +340,64 @@ No CSP or header code was changed during this audit.
 - No Prisma schema, migration, SQL, database query, or database write was performed.
 - No cancellation reason, status history, or payment/refund policy was invented.
 - No production deployment, merge, or promotion was performed.
+
+
+## COM-05 — Product stock and active/inactive handling audit
+
+**Inspected branch:** `chore/security-hardening` at the current source state following commit `04c92dacff11148b24550c53e659e94467a65fbb`.  
+**Scope:** Read-only inspection of admin product collection/item APIs, public product collection/detail APIs, product listing/detail pages, cart state, checkout, order creation, product deletion behavior, and the Prisma Product/OrderItem relations. No product was created or edited, no stock was changed, no order was placed, and no database was queried or modified.
+
+### Product creation and admin stock controls
+
+- Authenticated admin `POST /api/admin/products` validates name, slug, positive price, optional MRP, optional text fields, and stock.
+- Stock is constrained to a safe integer from 0 through 10,000,000. Omitted stock defaults to 0.
+- Newly created products are explicitly `isActive: true`, even when their stock is 0. This represents an active but sold-out catalogue item; it does not make it orderable.
+- Authenticated admin `PATCH /api/admin/products/[id]` validates stock as a non-negative safe integer within the same upper bound and validates `isActive` as a boolean. It can independently change stock and active state; no requirement forces zero-stock products inactive.
+- Admin product GET endpoints include inactive products so administrators can manage/reactivate them.
+- The admin UI exposes stock editing and Activate/Deactivate controls. It shows stock and an Inactive label, but it does not show a dedicated Sold Out badge in the product management list.
+
+### Public catalogue and product detail
+
+- `GET /api/products` filters with `isActive: true`; `GET /api/products/[slug]` also requires `isActive: true`.
+- Therefore an inactive product is excluded from the public list and direct slug lookup returns 404. Public API callers cannot retrieve inactive products through these routes.
+- Public listing cards do not receive or display stock quantity, so an active zero-stock product can still appear in the catalogue.
+- Product detail receives stock and displays In Stock / Out of Stock. Add-to-cart and WhatsApp controls are disabled/hidden when the fetched stock is zero.
+- Product detail quantity selection is capped at the fetched stock (with a fallback cap only when stock is falsy); for zero stock the purchase controls remain disabled.
+- Product data is fetched from the active-only public API. A product deactivated after it was already loaded may remain visible in the customer's current browser state until a refresh or server response.
+
+### Cart and order API enforcement
+
+- Cart contents are persisted in browser localStorage and include client-side name, price, image, and quantity. Cart add/increment operations do not fetch current stock or enforce a stock ceiling; cart quantities can exceed available stock, especially after multiple additions or when stock changes after the product page was loaded.
+- Checkout sends product IDs and quantities to the order API. Client-supplied price/subtotal/delivery/total are not used as authoritative values.
+- `POST /api/orders` re-fetches products from the database with `isActive: true`. If any requested product is missing or inactive, the whole request is rejected as unavailable (409).
+- Within the Prisma transaction, it checks each requested quantity against current database stock, then uses a conditional `updateMany` predicate requiring the product ID, `isActive: true`, and `stock >= quantity` before decrementing stock.
+- If any conditional decrement does not affect exactly one row, the transaction throws and the order/stock changes roll back. Order creation and stock reservation occur in the same transaction.
+- Duplicate product IDs are merged before validation; combined quantity is capped at 100. Each individual submitted quantity is also constrained to 1–100.
+- Thus direct API requests cannot purchase inactive products or exceed the stock available at the guarded decrement, based on the inspected source. Client-side cart state is not trusted for price, active state, or stock.
+
+### Deactivation and deletion
+
+- Admin DELETE checks whether any OrderItem references the product. If referenced, it soft-deactivates the product and retains the row; otherwise it hard-deletes the product.
+- The required Product relation on OrderItem has no product-side cascade delete, preserving historical order references.
+- If an already ordered product is deactivated, cancellation stock restoration still targets the retained Product row. It increments stock without reactivating the product, so the product remains unavailable publicly until an admin explicitly reactivates it.
+- No hard-delete race/concurrency test was performed; relational constraints provide an additional safeguard, but runtime behavior was not exercised.
+
+### Findings and risks
+
+1. **Cart quantity is not bounded by current stock.** The detail page initially caps quantity using the fetched stock, but the persisted cart and cart-page increment controls do not enforce stock limits or refresh stock. A customer can therefore prepare an over-quantity or stale cart. The order API rejects it with 409 rather than overselling; this is a UX/recovery issue, not a confirmed stock bypass.
+2. **Active zero-stock products remain visible in the catalogue.** This is consistent with the detail page's explicit Out of Stock state and disabled purchase controls, but the listing card itself does not indicate availability. Customers may open a product only to discover it is sold out.
+3. **WhatsApp ordering is a separate client-generated message path.** Product detail/cart can generate WhatsApp messages from browser-held product and quantity data; this path does not call the order API, reserve stock, or verify current prices/availability. It is a customer enquiry/contact flow, not a persisted order. Staff must confirm current stock and price before accepting such requests; no automatic stock reservation should be inferred.
+4. **Admin stock/active controls are independently editable.** The server-side order guard correctly handles zero stock and inactive state at purchase time. No rule requires an active product to have positive stock, which is not inherently incorrect because sold-out items can remain listed.
+5. **No live concurrency test was performed.** The conditional stock decrement and transaction are visible in source, but simultaneous checkout, admin stock edits, deactivation, and deletion races were not exercised against a test database.
+
+### COM-05 conclusion
+
+**No direct order-API path was found that can purchase an inactive product or exceed current stock in the inspected source.** The server rechecks active state and stock and conditionally decrements stock in the same transaction as order creation. Inactive products are excluded from public list/detail APIs; order-linked products are soft-deactivated rather than deleted. Main gaps are stale/unbounded client cart quantities, no stock indicator on catalogue cards, and the separate WhatsApp enquiry flow's lack of live price/stock verification. Runtime concurrency and deletion-race behavior remain unverified.
+
+### Explicit non-actions
+
+- No product, stock count, active flag, cart, or order was changed.
+- No customer-facing or admin code was modified.
+- No Prisma schema, migration, SQL, database query, or database write was performed.
+- No product was purchased or reserved.
+- No production deployment, merge, or promotion was performed.
