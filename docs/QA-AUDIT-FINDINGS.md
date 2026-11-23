@@ -48,3 +48,23 @@
 - The initial audit made no changes. Subsequent focused commits added `.eslintrc.json` and escaped three unescaped JSX entities; no test framework, CI workflow, dependency, Prisma schema, database, secret, or business rule was changed.
 - No standalone `pnpm lint`, `tsc --noEmit`, test command, or database command was executed. The successful Preview build is the only current verification of the integrated lint/type-check phase.
 - The READY Preview verifies the configured Vercel build path for the exact commit; it does not establish runtime correctness, test coverage, or standalone lint-script reliability.
+
+
+## QA-02 — Dedicated TypeScript check script
+
+**Status: Script added; matching Vercel Preview build verified. Standalone `pnpm typecheck` remains unverified.**
+
+### Verified implementation and deployment
+
+- Added the package script `"typecheck": "tsc --noEmit"` in commit `1d685bea5cbb27c60f5b1ef6525c55bc5a3b519c`.
+- The change was limited to `package.json`; dependency versions, lockfile, TypeScript configuration, Prisma schema, and application code were not changed.
+- The exact commit was built by Vercel Preview deployment `dpl_BJMgysur78sjGiGWTbuz58TewGaC` for repository `umaramroha/A-2-Z-PHARMA`, branch `chore/security-hardening`.
+- Deployment reached **READY**. Build logs confirm frozen-lockfile installation, Prisma Client generation, successful Next.js compilation, the integrated lint/type-check phase, route generation, and deployment completion.
+- Existing non-blocking warnings include `<img>` optimization recommendations and missing React Hook dependencies.
+
+### Verification limits and next steps
+
+- The standalone `pnpm typecheck` command was not executed independently. Do not report it as independently passing based only on the Vercel build.
+- QA-02's script addition and Preview build verification are complete; independent local command verification remains outstanding.
+- QA-03 should select a minimal test approach and define focused tests for pure validation/state-transition logic. Avoid database-backed tests until a safe isolated test database and explicit scope are established.
+- QA-04 should add CI only after standalone lint/typecheck execution and test tooling are reliable. CI must not run database mutation, seed, or production-environment scripts.
