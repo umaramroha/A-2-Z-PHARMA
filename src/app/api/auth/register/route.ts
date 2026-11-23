@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/clientIp.mjs";
 
 const registrationSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -25,11 +26,8 @@ function isUniqueConstraintError(error: unknown) {
 
 export async function POST(request: Request) {
   try {
-    // Rate limit based on the request IP (proxy configuration must be trusted).
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    // Use the hosting platform's canonical client-IP header for rate limiting.
+    const ip = getClientIp(request.headers);
     const rateKey = `register:${ip}`;
     const rateCheck = await checkRateLimit(rateKey);
 
