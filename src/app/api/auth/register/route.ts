@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/clientIp.mjs";
+import { createIpRateLimitKey } from "@/lib/rateLimitKeys.mjs";
 
 const registrationSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -28,17 +29,21 @@ export async function POST(request: Request) {
   try {
     // Use the hosting platform's canonical client-IP header for rate limiting.
     const ip = getClientIp(request.headers);
-    const rateKey = `register:${ip}`;
-    const rateCheck = await checkRateLimit(rateKey);
+    const rateKey = createIpRateLimitKey("register", ip);
 
-    if (!rateCheck.allowed) {
-      const minutes = Math.ceil(rateCheck.resetIn / 60000);
-      return NextResponse.json(
-        {
-          error: `Too many attempts. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`,
-        },
-        { status: 429 }
-      );
+    // Do not store raw IP addresses or group unknown callers into one bucket.
+    if (rateKey) {
+      const rateCheck = await checkRateLimit(rateKey);
+
+      if (!rateCheck.allowed) {
+        const minutes = Math.ceil(rateCheck.resetIn / 60000);
+        return NextResponse.json(
+          {
+            error: `Too many attempts. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`,
+          },
+          { status: 429 }
+        );
+      }
     }
 
     let body: unknown;
