@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { readJsonBody } from "@/lib/readJsonBody";
 import { prisma } from "@/lib/prisma";
 import { getValidAdminSession } from "@/lib/adminSession";
 
@@ -67,14 +68,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const body = await readJsonBody(request, 8 * 1024);
+    if (!body.ok) {
+      return NextResponse.json({ error: body.error }, { status: body.status });
     }
 
-    const parsed = settingsSchema.safeParse(body);
+    const parsed = settingsSchema.safeParse(body.data);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Invalid settings" },

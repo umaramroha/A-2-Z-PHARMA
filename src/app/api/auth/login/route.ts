@@ -3,6 +3,7 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { readJsonBody } from "@/lib/readJsonBody";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
@@ -18,14 +19,12 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const body = await readJsonBody(request, 8 * 1024);
+    if (!body.ok) {
+      return NextResponse.json({ error: body.error }, { status: body.status });
     }
 
-    const parsed = loginSchema.safeParse(body);
+    const parsed = loginSchema.safeParse(body.data);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Valid email and password are required" },
