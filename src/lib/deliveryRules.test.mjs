@@ -29,5 +29,5 @@ test("delivery pricing rejects invalid or negative subtotals", () => {
 });
 
 test("shared delivery configuration retains the existing business values", () => {
-  assert.deepEqual(deliveryConfig, { fee: 50, freeAbove: 500 });
+  assert.deepEqual(deliveryConfig, { fee: 50, freeAbove: 500, areas: ["All India"] });
 });

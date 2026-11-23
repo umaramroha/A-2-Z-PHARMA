@@ -3,10 +3,11 @@
  * Amounts are compared using their integer part so decimal currency values
  * are not rounded through floating-point arithmetic at the free-delivery edge.
  */
-/** @type {Readonly<{ fee: number, freeAbove: number }>} */
+/** @type {Readonly<{ fee: number, freeAbove: number, areas: readonly string[] }>} */
 export const deliveryConfig = Object.freeze({
   fee: 50,
   freeAbove: 500,
+  areas: Object.freeze(["All India"]),
 });
 
 /**

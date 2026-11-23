@@ -38,15 +38,15 @@
 
 ### Recommended safe sequence
 
-- QA-01: configuration and build-integrated lint remediation are complete for the current Preview path. Run `pnpm lint` separately in a controlled development environment before claiming the standalone script is independently verified.
-- QA-02: retain strict TypeScript settings and establish a dedicated `typecheck` script using `tsc --noEmit`; run it with installed dependencies. A successful Next.js build is useful evidence but does not replace a separately recorded TypeScript command result.
-- QA-03: select a small test framework and write focused tests for pure validation/state-transition logic before attempting database-backed integration tests.
+- QA-01: standalone `pnpm lint` passed in GitHub Actions run `45134250957` for commit `c728003f5bc771f06fbe90a71493dae5811ff4be`; non-blocking warnings remain visible in the Vercel build logs.
+- QA-02: strict TypeScript settings remain enabled; standalone `pnpm typecheck` passed in the same exact-commit Actions run.
+- QA-03: Node's built-in test runner is in place; order/payment transition and delivery-fee boundary suites passed in the recorded Actions run. Extend only with deterministic pure logic before any isolated DB-backed tests.
 - QA-04: read-only GitHub Actions quality workflow is now green for the recorded commit. CI must not access production secrets or run database mutation/seed scripts.
 
 ### Safety and verification limits
 
-- The initial audit made no changes. Subsequent focused commits added `.eslintrc.json` and escaped three unescaped JSX entities; no test framework, CI workflow, dependency, Prisma schema, database, secret, or business rule was changed.
-- No standalone `pnpm lint`, `tsc --noEmit`, test command, or database command was executed. The successful Preview build is the only current verification of the integrated lint/type-check phase.
+- The initial audit made no changes. Subsequent focused commits added ESLint configuration, test scripts, a read-only CI workflow, and pure helper tests; no new dependency, Prisma schema, database, secret, or payment policy was changed.
+- Standalone `pnpm test`, `pnpm typecheck`, and `pnpm lint` passed in Actions run `45134250957` for exact commit `c728003f5bc771f06fbe90a71493dae5811ff4be`. No database command was executed.
 - The READY Preview verifies the configured Vercel build path for the exact commit; it does not establish runtime correctness, test coverage, or standalone lint-script reliability.
 
 
@@ -111,12 +111,13 @@
 
 ## QA-03 / COM-03 — Shared delivery fee rule and boundary tests
 
-**Status: Implemented in the current development batch; CI and matching Vercel Preview verification pending.**
+**Status: Verified by CI and matching Vercel Preview for commit `c728003f5bc771f06fbe90a71493dae5811ff4be`.**
 
 - Source audit found the same ₹50 below ₹500 / free at ₹500+ rule duplicated in the cart, checkout, and order API; `deliveryConfig` already held those values but was not the shared calculation path.
-- Added `src/lib/deliveryRules.mjs` as the single source of delivery fee values and a pure calculator.
+- Added `src/lib/deliveryRules.mjs` as the single source of delivery fee values, the existing `areas: ["All India"]` setting, and a pure calculator.
 - Calculator compares the integer rupee portion from the exact decimal string; the server passes `Prisma.Decimal.toString()` and still calculates subtotal from database product prices.
 - Cart, checkout, and API now call the shared calculator. The empty-cart display remains free; non-empty carts follow the configured rule.
-- Added tests for below/exact/above threshold, decimal boundaries, invalid amounts, and unchanged configuration values.
+- Added tests for below/exact/above threshold, decimal boundaries, invalid amounts, and unchanged configuration values including `areas`.
 - No fee amount, free-delivery threshold, pincode validation, payment policy, product price, order total source, Prisma schema, database, or business data changed.
+- GitHub Actions run `45134250957` passed unit tests, typecheck, and lint; matching Vercel Preview `dpl_J7UNtiLmZxYMNNkgw29qJsKWuTHc` reached READY with successful compilation, integrated lint/typecheck, and 34/34 static page generation. Existing `<img>` and React Hook warnings remain non-blocking.
 - Pincode remains syntax-only; no postal lookup, delivery serviceability, carrier, or region pricing has been introduced.

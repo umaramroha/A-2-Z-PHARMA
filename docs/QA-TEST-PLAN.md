@@ -58,11 +58,11 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - The first run of `pnpm test` on commit `659fb05657d3e73baad3f0a9239a0ee4b87ea50d` exposed that the initial expected transition matrix incorrectly rejected `PENDING → PROCESSING`.
 - Source inspection confirms the pre-existing `STATUS_ORDER[next] > STATUS_ORDER[current]` predicate permits any later-ranked status, including skipped intermediate stages.
 - Correct the expected matrix to preserve this current behavior. Do not tighten or otherwise change the production transition predicate as part of QA.
-- The failed run stopped before standalone typecheck and lint; those checks remain pending until a successful rerun.
+- The initial failed run stopped before standalone typecheck and lint; the corrected rerun on commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4` passed all three quality commands.
 
 
 ## Successful quality-check baseline
 
-- GitHub Actions run `45133861216` for commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4` passed `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
-- Matching Vercel Preview for that exact commit reached READY after successful Prisma generation, Next.js compilation, lint/type-check phase, and 34/34 static page generation.
+- GitHub Actions run `45134250957` for commit `c728003f5bc771f06fbe90a71493dae5811ff4be` passed `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
+- Matching Vercel Preview `dpl_J7UNtiLmZxYMNNkgw29qJsKWuTHc` for that exact commit reached READY after successful Prisma generation, Next.js compilation, lint/type-check phase, and 34/34 static page generation.
 - This baseline is superseded for subsequent commits; inspect each new commit's Actions run and Vercel Preview independently.
