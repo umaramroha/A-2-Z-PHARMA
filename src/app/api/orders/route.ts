@@ -6,6 +6,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { calculateDeliveryFee } from "@/lib/deliveryRules.mjs";
+import {
+  aggregateOrderItems,
+  hasExcessOrderQuantity,
+} from "@/lib/orderQuantities.mjs";
 
 const orderInputSchema = z.object({
   customerName: z.string().trim().min(1).max(100),
@@ -96,18 +100,9 @@ export async function POST(request: Request) {
 
     const input = parsed.data;
 
-    // Merge duplicate product IDs so quantities and stock checks cannot be bypassed.
-    const quantities = new Map<string, number>();
-    for (const item of input.items) {
-      quantities.set(item.id, (quantities.get(item.id) || 0) + item.quantity);
-    }
-
-    let hasExcessQuantity = false;
-    quantities.forEach((quantity) => {
-      if (quantity > 100) hasExcessQuantity = true;
-    });
-
-    if (hasExcessQuantity) {
+    // Merge duplicate IDs before stock checks and persistence.
+    const quantityEntries = aggregateOrderItems(input.items);
+    if (hasExcessOrderQuantity(quantityEntries)) {
       return NextResponse.json(
         { error: "Maximum quantity per product is 100" },
         { status: 400 }
@@ -115,12 +110,7 @@ export async function POST(request: Request) {
     }
 
     const order = await prisma.$transaction(async (tx) => {
-      const productIds: string[] = [];
-      const quantityEntries: Array<[string, number]> = [];
-      quantities.forEach((quantity, productId) => {
-        productIds.push(productId);
-        quantityEntries.push([productId, quantity]);
-      });
+      const productIds = quantityEntries.map(([productId]) => productId);
       const products = await tx.product.findMany({
         where: { id: { in: productIds }, isActive: true },
         select: { id: true, price: true, stock: true },
