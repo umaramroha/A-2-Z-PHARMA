@@ -121,3 +121,13 @@
 - No fee amount, free-delivery threshold, pincode validation, payment policy, product price, order total source, Prisma schema, database, or business data changed.
 - GitHub Actions run `45134250957` passed unit tests, typecheck, and lint; matching Vercel Preview `dpl_J7UNtiLmZxYMNNkgw29qJsKWuTHc` reached READY with successful compilation, integrated lint/typecheck, and 34/34 static page generation. Existing `<img>` and React Hook warnings remain non-blocking.
 - Pincode remains syntax-only; no postal lookup, delivery serviceability, carrier, or region pricing has been introduced.
+
+
+## QA-05 — Admin React Hook dependency warnings
+
+**Status: Three warning sources corrected; Actions and Vercel Preview verification pending.**
+
+- The Vercel build reported missing useEffect dependencies for fetchStats, fetchOrders, and fetchProducts in the admin dashboard, orders, and products pages.
+- Each loader is now memoized with useCallback and its actual dependency (router); the matching effect calls it and includes the callback in its dependency array.
+- No ESLint rule was disabled or suppressed. Request URLs, authentication redirects, loading state, and API/business behavior are unchanged.
+- Remaining img optimization warnings are not changed in this batch because image sources include user-managed/dynamic URLs and should be migrated only after the supported host/loader behavior is audited.
