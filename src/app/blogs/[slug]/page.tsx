@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -134,8 +135,14 @@ export default async function BlogDetailPage({
         ← Back to Blogs
       </Link>
 
-      <div className="rounded-lg overflow-hidden mb-6">
-        <img src={blog.image} alt={blog.title} className="w-full h-auto" />
+      <div className="relative mb-6 aspect-[3/2] overflow-hidden rounded-lg">
+        <Image
+          src={blog.image}
+          alt={blog.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 768px"
+          className="object-cover"
+        />
       </div>
 
       <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">

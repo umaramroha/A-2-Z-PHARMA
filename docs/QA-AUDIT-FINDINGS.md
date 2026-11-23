@@ -125,7 +125,7 @@
 
 ## QA-05 — Admin React Hook dependency warnings
 
-**Status: Three initial warnings passed verification on commit `de7a4c0d27503b6f6585117b1c05a1a6e033e8eb`; two additional warnings corrected in this follow-up batch, verification pending.**
+**Status: All five React Hook dependency warnings passed verification on commit `579ea2b521feb74c22456332f2f34ad6845f5fb1`; no React Hook warnings remain in the matching Vercel build logs.**
 
 - The Vercel build reported missing useEffect dependencies for fetchStats, fetchOrders, and fetchProducts in the admin dashboard, orders, and products pages.
 - Each loader is now memoized with useCallback and its actual dependency (router); the matching effect calls it and includes the callback in its dependency array.
@@ -135,9 +135,20 @@
 
 ## QA-05 follow-up — Admin settings and customer order detail
 
-**Status: Two additional dependency warnings corrected; verification pending.**
+**Status: Two additional dependency warnings corrected and verified on commit `579ea2b521feb74c22456332f2f34ad6845f5fb1`; GitHub Actions and Vercel Preview both passed.**
 
 - Memoized the admin settings loader with `useCallback([router])` and moved the effect to depend on that callback.
 - Memoized the customer order loader with `useCallback([orderId])`; the effect now depends on authentication state, the scalar route ID, router, and loader callback instead of the entire params object.
 - Request endpoints, authorization redirects, order ownership checks, UI, and business behavior are unchanged.
 - No lint rules are disabled. Re-run Actions and inspect the exact Preview build log to confirm the five hook warnings are gone.
+
+
+## QA-06 — Safe Next Image migration
+
+**Status: Static editorial images migrated; dynamic image sources intentionally remain under audit.**
+
+- The two blog-page image sources are fixed Unsplash URLs on the already allowlisted `images.unsplash.com` host.
+- Migrated the blog card and blog detail images to `next/image` with explicit responsive sizes and aspect-ratio containers.
+- Did not migrate product, cart, order, admin product, or banner images in this batch. Those URLs are read from database records or user-managed uploads/fields; the current Next Image allowlist does not establish that every existing URL is on a permitted host.
+- Did not add broad remote host wildcards or suppress `@next/next/no-img-element`. Remaining dynamic image warnings are accepted until a safe host/data audit supports migration.
+- No image records, URLs, database, product content, banner content, or image upload settings changed.
