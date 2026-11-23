@@ -50,7 +50,7 @@ Do not expose secrets in output, logs, commits, or documentation. Treat `.env` a
 - Inspect Git status and the target branch head before editing. Preserve unrelated user changes.
 - Prefer the smallest safe, backward-compatible change.
 - Avoid broad dependency upgrades, rewrites, and unrelated cleanup.
-- Keep each commit focused on one file/change; review the complete diff before committing.
+- Group related files into one planned batch and one commit when they implement a coherent task (for example, a pure helper, its tests, the calling route, scripts, and matching documentation). Split unrelated or high-risk work into separate batches. Review every changed file and the complete combined diff before committing.
 - Do not claim tests or runtime behavior were verified unless they were actually checked.
 - If blocked, document the exact blocker and continue only with independent, safe work.
 

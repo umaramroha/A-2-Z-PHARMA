@@ -15,7 +15,7 @@ This file records durable decisions for A-2-Z PHARMA. Update it when an approved
 
 ## Change discipline
 - Audit existing implementation before changing it; do not rewrite code based only on assumptions or a reference implementation.
-- Keep each change focused and use one file or tightly scoped change per commit.
+- Plan related multi-file changes together and commit them as one coherent batch. Keep unrelated tasks separate; isolate security-sensitive, payment, schema, and data-impacting changes. Review the full combined diff and run the relevant checks before committing.
 - Review the diff and run the applicable checks before committing.
 - Never hide a failing check by disabling it or weakening its configuration without a documented reason.
 

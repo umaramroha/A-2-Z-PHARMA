@@ -47,9 +47,9 @@ These features are reference-only observations, not approved requirements. Do no
 | ID | Task | Status | Acceptance / safety boundary |
 |---|---|---|---|
 | QA-01 | Audit ESLint configuration and scripts | Build-integrated lint remediation complete; standalone `pnpm lint` remains unverified | Added minimal `.eslintrc.json` extending `next/core-web-vitals` and fixed three unescaped JSX entities exposed by lint. Latest Preview for commit `f853c39591bf917b934afe0495bc6ac6052c9d0c` reached READY; logs confirm Prisma generation, Next.js compilation, integrated lint/type-check phase, route generation, and deployment completion. Non-blocking `<img>` and React Hook dependency warnings remain. Do not claim standalone `pnpm lint` passes: it has not been executed independently. Findings: `docs/QA-AUDIT-FINDINGS.md`. |
-| QA-02 | Establish a safe TypeScript check | Compiler configuration audited; standalone command execution pending | `tsconfig.json` has `strict: true` and `noEmit: true`; Vercel Preview build's Next.js type-check phase completed successfully. Run and record `npx tsc --noEmit` with installed dependencies when available. |
-| QA-03 | Add focused tests for critical business flows | Pending design | Choose test tooling only after inspecting current dependencies; no DB mutation or production data. |
-| QA-04 | Add GitHub Actions CI | Pending audit | Inspect existing workflows first; run read-only checks only and avoid duplicate/unnecessary dependencies. |
+| QA-02 | Establish a safe TypeScript check | Script added; Preview build verified; standalone command pending | `package.json` now exposes `pnpm typecheck` as `tsc --noEmit`. The matching Preview for commit `1d685bea5cbb27c60f5b1ef6525c55bc5a3b519c` reached READY and completed Next.js's integrated type-check phase. The standalone script has not been run independently. |
+| QA-03 | Add focused tests for critical business flows | Initial pure order/payment transition tests added; broader coverage pending | Use Node's built-in `node:test` runner to avoid new dependencies and lockfile churn. Extract the existing order/payment transition predicates without changing their behavior, and test allowed/blocked transitions. No database, Prisma, payment, stock, or business-rule mutation. Expand only after this first suite is stable. |
+| QA-04 | Add GitHub Actions CI | Pending | Add a minimal read-only workflow after test, lint, and TypeScript commands are independently reliable. CI must not access production secrets or run database mutation/seed scripts. |
 
 ## Execution order
 

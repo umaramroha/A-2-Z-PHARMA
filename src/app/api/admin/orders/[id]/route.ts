@@ -2,65 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getValidAdminSession } from "@/lib/adminSession";
-
-const VALID_STATUSES = [
-  "PENDING",
-  "CONFIRMED",
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELLED",
-] as const;
-
-const VALID_PAYMENT_STATUSES = [
-  "PENDING",
-  "PAID",
-  "FAILED",
-  "REFUNDED",
-] as const;
-
-const patchSchema = z
-  .object({
-    status: z.enum(VALID_STATUSES).optional(),
-    paymentStatus: z.enum(VALID_PAYMENT_STATUSES).optional(),
-  })
-  .refine((data) => data.status !== undefined || data.paymentStatus !== undefined, {
-    message: "Nothing to update",
-  });
-
-const STATUS_ORDER: Record<(typeof VALID_STATUSES)[number], number> = {
-  PENDING: 0,
-  CONFIRMED: 1,
-  PROCESSING: 2,
-  SHIPPED: 3,
-  DELIVERED: 4,
-  CANCELLED: -1,
-};
-
-function canTransitionStatus(
-  current: (typeof VALID_STATUSES)[number],
-  next: (typeof VALID_STATUSES)[number]
-) {
-  if (current === next || current === "CANCELLED" || current === "DELIVERED") {
-    return false;
-  }
-
-  if (next === "CANCELLED") {
-    return ["PENDING", "CONFIRMED", "PROCESSING"].includes(current);
-  }
-
-  return STATUS_ORDER[next] > STATUS_ORDER[current];
-}
-
-function canTransitionPayment(
-  current: (typeof VALID_PAYMENT_STATUSES)[number],
-  next: (typeof VALID_PAYMENT_STATUSES)[number]
-) {
-  if (current === next || current === "REFUNDED") return false;
-  if (current === "PENDING") return next === "PAID" || next === "FAILED";
-  if (current === "FAILED") return next === "PENDING";
-  return current === "PAID" && next === "REFUNDED";
-}
+import {
+  VALID_PAYMENT_STATUSES,
+  VALID_STATUSES,
+  canTransitionPayment,
+  canTransitionStatus,
+} from "@/lib/orderTransitions.mjs";
 
 // GET single order
 export async function GET(

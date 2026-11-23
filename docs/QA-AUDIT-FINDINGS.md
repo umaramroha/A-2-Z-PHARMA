@@ -68,3 +68,16 @@
 - QA-02's script addition and Preview build verification are complete; independent local command verification remains outstanding.
 - QA-03 should select a minimal test approach and define focused tests for pure validation/state-transition logic. Avoid database-backed tests until a safe isolated test database and explicit scope are established.
 - QA-04 should add CI only after standalone lint/typecheck execution and test tooling are reliable. CI must not run database mutation, seed, or production-environment scripts.
+
+
+## QA-03 — Dependency-free unit test foundation
+
+**Status: Initial unit suite added for existing order/payment transition predicates; broader business-flow coverage remains pending.**
+
+- Inspected dependencies and lockfile; no Jest, Vitest, Playwright, Cypress, `tsx`, or `ts-node` test runner was already installed.
+- Selected Node's built-in `node:test` and `node:assert/strict` to avoid a new dependency and lockfile churn.
+- Added the `pnpm test` script (`node --test`).
+- Extracted the existing order/payment transition constants and predicates into `src/lib/orderTransitions.mjs` without changing their rules; the admin order API now imports the same helper.
+- Added exhaustive pairwise tests for both existing status sets in `src/lib/orderTransitions.test.mjs` and documented scope/limits in `docs/QA-TEST-PLAN.md`.
+- Tests do not prove API authorization, Prisma transaction/rollback behavior, concurrent stock restoration, payment-method policy, or runtime behavior. Actual test/typecheck/lint/build results must be recorded after execution.
+- No database, Prisma schema, business policy, payment configuration, environment secret, or customer/order data was changed. QA-04 CI remains pending until checks are independently reliable.
