@@ -1,3 +1,7 @@
+import { deliveryConfig } from "./deliveryRules.mjs";
+
+export { deliveryConfig };
+
 export const siteConfig = {
   name: "A2Z Pharma",
   tagline: "Ayurvedic & Unani Care",
@@ -7,12 +11,6 @@ export const siteConfig = {
   whatsappRaw: "918410127168",
   email: "sahyogherbalpharmacy@gmail.com",
   address: "Amroha, Uttar Pradesh, India",
-};
-
-export const deliveryConfig = {
-  areas: ["All India"],
-  fee: 50,
-  freeAbove: 500,
 };
 
 export const categories = [

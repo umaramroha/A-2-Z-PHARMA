@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { getCartOrderMessage, getWhatsAppLink } from "@/lib/whatsapp";
+import { calculateDeliveryFee } from "@/lib/deliveryRules.mjs";
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
-  const deliveryFee = totalPrice >= 500 || totalPrice === 0 ? 0 : 50;
+  const deliveryFee = items.length === 0 ? 0 : calculateDeliveryFee(totalPrice);
   const finalTotal = totalPrice + deliveryFee;
 
   if (!items.length)

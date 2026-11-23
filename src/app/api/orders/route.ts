@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { calculateDeliveryFee } from "@/lib/deliveryRules.mjs";
 
 const orderInputSchema = z.object({
   customerName: z.string().trim().min(1).max(100),
@@ -143,10 +144,10 @@ export async function POST(request: Request) {
         subtotal = subtotal.add(product.price.mul(quantity));
       }
 
-      // Keep the existing delivery rule: free at ₹500+, otherwise ₹50.
-      const deliveryFee = subtotal.greaterThanOrEqualTo(500)
-        ? new Prisma.Decimal(0)
-        : new Prisma.Decimal(50);
+      // Reuse the shared exact-decimal delivery rule; never trust client totals.
+      const deliveryFee = new Prisma.Decimal(
+        calculateDeliveryFee(subtotal.toString()),
+      );
       const total = subtotal.add(deliveryFee);
 
       // Reserve stock atomically. Any failure rolls back the entire transaction.

@@ -4,7 +4,7 @@
 
 ## QA-01 — ESLint configuration and scripts
 
-**Status: Minimal Next.js ESLint configuration added; Vercel build lint phase passes. Standalone `pnpm lint` remains unverified.**
+**Status: Minimal Next.js ESLint configuration added; standalone `pnpm lint` passed in GitHub Actions run `45133861216` for commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4`.**
 
 ### Verified repository facts
 
@@ -41,7 +41,7 @@
 - QA-01: configuration and build-integrated lint remediation are complete for the current Preview path. Run `pnpm lint` separately in a controlled development environment before claiming the standalone script is independently verified.
 - QA-02: retain strict TypeScript settings and establish a dedicated `typecheck` script using `tsc --noEmit`; run it with installed dependencies. A successful Next.js build is useful evidence but does not replace a separately recorded TypeScript command result.
 - QA-03: select a small test framework and write focused tests for pure validation/state-transition logic before attempting database-backed integration tests.
-- QA-04: add GitHub Actions only after the checks above are independently executable. CI must not access production secrets or run database mutation/seed scripts.
+- QA-04: read-only GitHub Actions quality workflow is now green for the recorded commit. CI must not access production secrets or run database mutation/seed scripts.
 
 ### Safety and verification limits
 
@@ -52,7 +52,7 @@
 
 ## QA-02 — Dedicated TypeScript check script
 
-**Status: Script added; matching Vercel Preview build verified. Standalone `pnpm typecheck` remains unverified.**
+**Status: Script added; standalone `pnpm typecheck` passed in GitHub Actions run `45133861216` for commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4`.**
 
 ### Verified implementation and deployment
 
@@ -72,7 +72,7 @@
 
 ## QA-03 — Dependency-free unit test foundation
 
-**Status: Initial unit suite added for existing order/payment transition predicates; broader business-flow coverage remains pending.**
+**Status: Order/payment transition unit suite passes in GitHub Actions run `45133861216`; broader business-flow coverage remains pending.**
 
 - Inspected dependencies and lockfile; no Jest, Vitest, Playwright, Cypress, `tsx`, or `ts-node` test runner was already installed.
 - Selected Node's built-in `node:test` and `node:assert/strict` to avoid a new dependency and lockfile churn.
@@ -85,20 +85,20 @@
 
 ## QA-04 — Read-only GitHub Actions quality workflow
 
-**Status: Workflow committed; first Actions run and independent command results pending.**
+**Status: Workflow green for commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4`; all three quality commands passed.**
 
 - Added `.github/workflows/quality.yml` for pushes to `chore/security-hardening` and pull requests targeting `main`.
 - The job uses read-only repository permissions, Node.js 20, pnpm 10.28.0, and `pnpm install --frozen-lockfile`.
 - The job generates Prisma Client locally, then runs `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
 - No GitHub secrets, Vercel secrets, production credentials, database URL, database connection, migration, seed, `db:push`, or data-write step is configured.
 - The workflow intentionally does not run `next build`; Vercel Preview already performs the configured production build and remains the build/deployment gate. This avoids inventing or exposing environment values in GitHub Actions.
-- Workflow file has not yet executed at the time of this record. Do not report CI green until the exact commit's Actions run and job logs are inspected.
+- GitHub Actions run `45133861216` completed with conclusion `success`; all workflow steps including install, Prisma generation, unit tests, typecheck, and lint passed.
 - Branch protection/required status checks were not changed. The branch currently reports protection disabled; enabling repository rules is outside this change.
 
 
 ## QA-03/04 — First automated CI execution and correction
 
-**Status: CI workflow executed for the exact commit; unit test failed because its expected transition matrix did not match the existing application predicate. Correction prepared; typecheck/lint were skipped by fail-fast sequencing.**
+**Historical first run: commit `659fb05657d3e73baad3f0a9239a0ee4b87ea50d` failed only because the test's expected matrix incorrectly rejected a permitted forward-rank transition. Corrected on commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4`; subsequent Actions run passed.**
 
 - GitHub Actions run: `45133695589`, commit `659fb05657d3e73baad3f0a9239a0ee4b87ea50d`.
 - Frozen-lockfile dependency installation completed successfully.
@@ -106,4 +106,17 @@
 - `pnpm test` failed on `PENDING → PROCESSING`: actual predicate returned `true`, while the initial expected matrix said `false`.
 - Existing source ranks order states and accepts any forward rank (not only the next adjacent state). Therefore the mismatch is in the new test expectation/documentation, not evidence that the application logic changed or failed.
 - Corrective change updates the test matrix and plan to explicitly preserve skipped forward stages. Production transition rules remain unchanged.
-- `pnpm typecheck` and `pnpm lint` did not run in this failed attempt. They must be inspected in the next successful workflow run.
+- The successful rerun executed `pnpm test`, `pnpm typecheck`, and `pnpm lint`; all passed.
+
+
+## QA-03 / COM-03 — Shared delivery fee rule and boundary tests
+
+**Status: Implemented in the current development batch; CI and matching Vercel Preview verification pending.**
+
+- Source audit found the same ₹50 below ₹500 / free at ₹500+ rule duplicated in the cart, checkout, and order API; `deliveryConfig` already held those values but was not the shared calculation path.
+- Added `src/lib/deliveryRules.mjs` as the single source of delivery fee values and a pure calculator.
+- Calculator compares the integer rupee portion from the exact decimal string; the server passes `Prisma.Decimal.toString()` and still calculates subtotal from database product prices.
+- Cart, checkout, and API now call the shared calculator. The empty-cart display remains free; non-empty carts follow the configured rule.
+- Added tests for below/exact/above threshold, decimal boundaries, invalid amounts, and unchanged configuration values.
+- No fee amount, free-delivery threshold, pincode validation, payment policy, product price, order total source, Prisma schema, database, or business data changed.
+- Pincode remains syntax-only; no postal lookup, delivery serviceability, carrier, or region pricing has been introduced.

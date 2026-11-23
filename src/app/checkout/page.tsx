@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { calculateDeliveryFee } from "@/lib/deliveryRules.mjs";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
@@ -13,7 +14,7 @@ export default function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState("");
 
-  const deliveryFee = totalPrice >= 500 ? 0 : 50;
+  const deliveryFee = calculateDeliveryFee(totalPrice);
   const finalTotal = totalPrice + deliveryFee;
 
   const [formData, setFormData] = useState({

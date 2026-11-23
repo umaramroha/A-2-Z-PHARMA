@@ -24,9 +24,15 @@ pnpm build
 ```
 Mark a command passed only after its actual exit status is observed. A Vercel READY build does not prove that standalone `pnpm test` or `pnpm typecheck` ran.
 
+## Delivery-fee coverage
+- `src/lib/deliveryRules.mjs` is the shared source for the existing ₹50 fee and ₹500 free-delivery threshold.
+- `calculateDeliveryFee` accepts numeric or decimal-string subtotals and compares the integer rupee portion without floating-point threshold rounding.
+- `src/lib/deliveryRules.test.mjs` covers below-threshold, exact-threshold, above-threshold, decimal-edge, invalid-input, and configuration cases.
+- Cart, checkout, and the order API use the shared calculator. The order API continues to derive subtotal from database product prices and never trusts client totals.
+- Cart's empty-cart presentation remains free; non-empty carts use the shared rule.
+
 ## Next test candidates (not covered yet)
 1. Order-input validation boundaries and duplicate product-ID quantity aggregation after safe extraction.
-2. Delivery fee boundaries (₹499/₹500) after a shared pure calculator is introduced without changing policy.
 3. WhatsApp message/link encoding and quantity/total formatting.
 4. API authorization and customer ownership using isolated mocks/test doubles.
 5. Transaction rollback, concurrent stock reservation, and duplicate cancellation only with a disposable isolated test DB or purpose-built harness; never Preview/Production data.
@@ -34,7 +40,7 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 
 ## Explicitly out of scope
 - No production/Preview DB connection, SQL, migration, seed, `db:push`, or data write.
-- No gateway, COD/UPI, delivery, stock, or order policy changes in this initial test batch.
+- No gateway, COD/UPI, stock, or order policy changes. Delivery fee values and threshold are unchanged; the existing rule was centralized and tested.
 - No production deployment, branch merge, or environment/secret modification.
 
 
@@ -53,3 +59,10 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - Source inspection confirms the pre-existing `STATUS_ORDER[next] > STATUS_ORDER[current]` predicate permits any later-ranked status, including skipped intermediate stages.
 - Correct the expected matrix to preserve this current behavior. Do not tighten or otherwise change the production transition predicate as part of QA.
 - The failed run stopped before standalone typecheck and lint; those checks remain pending until a successful rerun.
+
+
+## Successful quality-check baseline
+
+- GitHub Actions run `45133861216` for commit `17f672161b49ce67b8020c78ebb2b04639ce2fa4` passed `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
+- Matching Vercel Preview for that exact commit reached READY after successful Prisma generation, Next.js compilation, lint/type-check phase, and 34/34 static page generation.
+- This baseline is superseded for subsequent commits; inspect each new commit's Actions run and Vercel Preview independently.
