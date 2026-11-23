@@ -16,7 +16,7 @@ export async function readJsonBody(
 
   const contentLength = request.headers.get("content-length");
   if (contentLength !== null) {
-    if (!/^\\d+$/.test(contentLength)) {
+    if (!/^\d+$/.test(contentLength)) {
       return { ok: false, status: 400, error: "Invalid request body" };
     }
 
