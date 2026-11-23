@@ -2,32 +2,48 @@ const fs = require("fs");
 const path = require("path");
 const { Client } = require("pg");
 
-const envPath = path.join(__dirname, "..", ".env");
-const envContent = fs.readFileSync(envPath, "utf8");
-const match = envContent.match(/DATABASE_URL="?([^"\n]+)"?/);
-const connectionString = match[1].trim();
+async function main() {
+  let client;
+  let connected = false;
 
-const client = new Client({ connectionString });
-
-const SQL = `
-CREATE TABLE IF NOT EXISTS "RateLimit" (
-  "key" TEXT PRIMARY KEY,
-  "count" INTEGER NOT NULL DEFAULT 0,
-  "resetAt" TIMESTAMPTZ NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS "RateLimit_resetAt_idx" ON "RateLimit"("resetAt");
-`;
-
-(async () => {
   try {
+    const envPath = path.join(__dirname, "..", ".env");
+    const envContent = fs.readFileSync(envPath, "utf8");
+    const match = envContent.match(/^\s*DATABASE_URL\s*=\s*"?([^"\r\n]+)"?\s*$/m);
+
+    if (!match || !match[1].trim()) {
+      throw new Error("DATABASE_URL is missing or empty in .env");
+    }
+
+    client = new Client({ connectionString: match[1].trim() });
     await client.connect();
+    connected = true;
     console.log("Connected to database");
-    await client.query(SQL);
-    console.log("✅ RateLimit table created");
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "RateLimit" (
+        "key" TEXT PRIMARY KEY,
+        "count" INTEGER NOT NULL DEFAULT 0,
+        "resetAt" TIMESTAMPTZ NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS "RateLimit_resetAt_idx" ON "RateLimit"("resetAt");
+    `);
+    console.log("RateLimit table is ready");
   } catch (err) {
-    console.error("Error:", err.message);
+    console.error("RateLimit table setup failed:", err.message);
+    process.exitCode = 1;
   } finally {
-    await client.end();
+    if (client && connected) {
+      try {
+        await client.end();
+      } catch (err) {
+        console.error("Failed to close database connection:", err.message);
+        process.exitCode = 1;
+      }
+    }
   }
-})();
+}
+
+main().catch((err) => {
+  console.error("Unexpected RateLimit setup failure:", err);
+  process.exitCode = 1;
+});
