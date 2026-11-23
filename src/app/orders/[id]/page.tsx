@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,19 +60,13 @@ export default function OrderTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!authLoading && !isLoggedIn) {
-      router.push("/login");
-      return;
-    }
-    if (isLoggedIn && params?.id) {
-      fetchOrder();
-    }
-  }, [isLoggedIn, authLoading, params, router]);
+  const orderId = typeof params.id === "string" ? params.id : undefined;
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
+    if (!orderId) return;
+
     try {
-      const res = await fetch(`/api/orders/${params.id}`);
+      const res = await fetch(`/api/orders/${orderId}`);
       if (!res.ok) throw new Error("Order not found");
       const data = await res.json();
       setOrder(data.order);
@@ -81,7 +75,17 @@ export default function OrderTrackingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+    if (isLoggedIn && orderId) {
+      void fetchOrder();
+    }
+  }, [isLoggedIn, authLoading, orderId, router, fetchOrder]);
 
   if (authLoading || loading) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -26,11 +26,7 @@ export default function AdminSettingsPage() {
     confirmPassword: "",
   });
 
-  useEffect(() => {
-    fetchAdmin();
-  }, []);
-
-  const fetchAdmin = async () => {
+  const fetchAdmin = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/settings");
       if (res.status === 401) {
@@ -45,7 +41,11 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    void fetchAdmin();
+  }, [fetchAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

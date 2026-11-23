@@ -125,9 +125,19 @@
 
 ## QA-05 — Admin React Hook dependency warnings
 
-**Status: Three warning sources corrected; Actions and Vercel Preview verification pending.**
+**Status: Three initial warnings passed verification on commit `de7a4c0d27503b6f6585117b1c05a1a6e033e8eb`; two additional warnings corrected in this follow-up batch, verification pending.**
 
 - The Vercel build reported missing useEffect dependencies for fetchStats, fetchOrders, and fetchProducts in the admin dashboard, orders, and products pages.
 - Each loader is now memoized with useCallback and its actual dependency (router); the matching effect calls it and includes the callback in its dependency array.
 - No ESLint rule was disabled or suppressed. Request URLs, authentication redirects, loading state, and API/business behavior are unchanged.
 - Remaining img optimization warnings are not changed in this batch because image sources include user-managed/dynamic URLs and should be migrated only after the supported host/loader behavior is audited.
+
+
+## QA-05 follow-up — Admin settings and customer order detail
+
+**Status: Two additional dependency warnings corrected; verification pending.**
+
+- Memoized the admin settings loader with `useCallback([router])` and moved the effect to depend on that callback.
+- Memoized the customer order loader with `useCallback([orderId])`; the effect now depends on authentication state, the scalar route ID, router, and loader callback instead of the entire params object.
+- Request endpoints, authorization redirects, order ownership checks, UI, and business behavior are unchanged.
+- No lint rules are disabled. Re-run Actions and inspect the exact Preview build log to confirm the five hook warnings are gone.
