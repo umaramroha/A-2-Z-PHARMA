@@ -13,7 +13,11 @@ const settingsSchema = z.object({
     .optional()
     .refine((value) => value === undefined || value.length >= 12, {
       message: "New password must be at least 12 characters",
-    }),
+    })
+    .refine(
+      (value) => value === undefined || Buffer.byteLength(value, "utf8") <= 72,
+      { message: "New password must not exceed 72 UTF-8 bytes" }
+    ),
 });
 
 function isUniqueConstraintError(error: unknown) {
