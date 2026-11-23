@@ -4,8 +4,18 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category");
-    const q = searchParams.get("q");
+    const rawCategory = searchParams.get("category");
+    const rawQuery = searchParams.get("q");
+    const category = rawCategory?.trim() || null;
+    const q = rawQuery?.trim() || null;
+
+    // Bound user-controlled filters before sending them to the database.
+    if ((category && category.length > 100) || (q && q.length > 100)) {
+      return NextResponse.json(
+        { error: "Search filters must be 100 characters or fewer" },
+        { status: 400 }
+      );
+    }
 
     const where: any = { isActive: true };
 
