@@ -11,7 +11,7 @@ Build repeatable tests around deterministic business logic before database-backe
 - Keep initial tests deterministic and free of Prisma/database setup.
 
 ## Initial coverage
-- Exhaustively check every pair of existing order statuses: forward path PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED; cancellation only from PENDING, CONFIRMED, PROCESSING; reject same-state, backward/skipped, post-shipment cancellation, and transitions out of terminal states.
+- Exhaustively check every pair of existing order statuses. The current predicate permits any forward-rank transition among PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED, including skipped intermediate stages; cancellation is permitted only from PENDING, CONFIRMED, or PROCESSING. Reject same-state, backward, post-shipment cancellation, and transitions out of terminal states. This records existing behavior; it does not decide whether skipping stages is desirable business policy.
 - Exhaustively check every pair of existing payment statuses: PENDING → PAID/FAILED; FAILED → PENDING; PAID → REFUNDED; reject all other and same-state transitions.
 - These tests preserve current behavior. They do not add COD/UPI-specific rules or cross-validate order/payment status, both documented as unresolved COM-02 policy gaps.
 
@@ -45,3 +45,11 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - CI has only `contents: read` permission and does not receive application or production secrets.
 - The workflow does not run `next build`; matching Vercel Preview is the production-build gate.
 - Treat CI as pending until the GitHub Actions run for the exact commit is complete and its logs show all checks passed.
+
+
+## First CI run — test expectation correction
+
+- The first run of `pnpm test` on commit `659fb05657d3e73baad3f0a9239a0ee4b87ea50d` exposed that the initial expected transition matrix incorrectly rejected `PENDING → PROCESSING`.
+- Source inspection confirms the pre-existing `STATUS_ORDER[next] > STATUS_ORDER[current]` predicate permits any later-ranked status, including skipped intermediate stages.
+- Correct the expected matrix to preserve this current behavior. Do not tighten or otherwise change the production transition predicate as part of QA.
+- The failed run stopped before standalone typecheck and lint; those checks remain pending until a successful rerun.

@@ -94,3 +94,16 @@
 - The workflow intentionally does not run `next build`; Vercel Preview already performs the configured production build and remains the build/deployment gate. This avoids inventing or exposing environment values in GitHub Actions.
 - Workflow file has not yet executed at the time of this record. Do not report CI green until the exact commit's Actions run and job logs are inspected.
 - Branch protection/required status checks were not changed. The branch currently reports protection disabled; enabling repository rules is outside this change.
+
+
+## QA-03/04 — First automated CI execution and correction
+
+**Status: CI workflow executed for the exact commit; unit test failed because its expected transition matrix did not match the existing application predicate. Correction prepared; typecheck/lint were skipped by fail-fast sequencing.**
+
+- GitHub Actions run: `45133695589`, commit `659fb05657d3e73baad3f0a9239a0ee4b87ea50d`.
+- Frozen-lockfile dependency installation completed successfully.
+- Prisma Client generation completed successfully without a database connection.
+- `pnpm test` failed on `PENDING → PROCESSING`: actual predicate returned `true`, while the initial expected matrix said `false`.
+- Existing source ranks order states and accepts any forward rank (not only the next adjacent state). Therefore the mismatch is in the new test expectation/documentation, not evidence that the application logic changed or failed.
+- Corrective change updates the test matrix and plan to explicitly preserve skipped forward stages. Production transition rules remain unchanged.
+- `pnpm typecheck` and `pnpm lint` did not run in this failed attempt. They must be inspected in the next successful workflow run.
