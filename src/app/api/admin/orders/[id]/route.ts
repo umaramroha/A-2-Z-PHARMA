@@ -9,6 +9,15 @@ import {
   canTransitionStatus,
 } from "@/lib/orderTransitions.mjs";
 
+const patchSchema = z
+  .object({
+    status: z.enum(VALID_STATUSES).optional(),
+    paymentStatus: z.enum(VALID_PAYMENT_STATUSES).optional(),
+  })
+  .refine((data) => data.status !== undefined || data.paymentStatus !== undefined, {
+    message: "Nothing to update",
+  });
+
 // GET single order
 export async function GET(
   request: Request,
