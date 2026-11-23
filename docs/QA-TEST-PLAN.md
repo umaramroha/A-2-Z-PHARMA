@@ -36,3 +36,12 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - No production/Preview DB connection, SQL, migration, seed, `db:push`, or data write.
 - No gateway, COD/UPI, delivery, stock, or order policy changes in this initial test batch.
 - No production deployment, branch merge, or environment/secret modification.
+
+
+## Continuous integration
+
+- `.github/workflows/quality.yml` runs on pushes to `chore/security-hardening` and pull requests targeting `main`.
+- It installs with the frozen lockfile, generates Prisma Client without connecting to a database, then runs unit tests, TypeScript, and ESLint.
+- CI has only `contents: read` permission and does not receive application or production secrets.
+- The workflow does not run `next build`; matching Vercel Preview is the production-build gate.
+- Treat CI as pending until the GitHub Actions run for the exact commit is complete and its logs show all checks passed.

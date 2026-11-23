@@ -81,3 +81,16 @@
 - Added exhaustive pairwise tests for both existing status sets in `src/lib/orderTransitions.test.mjs` and documented scope/limits in `docs/QA-TEST-PLAN.md`.
 - Tests do not prove API authorization, Prisma transaction/rollback behavior, concurrent stock restoration, payment-method policy, or runtime behavior. Actual test/typecheck/lint/build results must be recorded after execution.
 - No database, Prisma schema, business policy, payment configuration, environment secret, or customer/order data was changed. QA-04 CI remains pending until checks are independently reliable.
+
+
+## QA-04 — Read-only GitHub Actions quality workflow
+
+**Status: Workflow committed; first Actions run and independent command results pending.**
+
+- Added `.github/workflows/quality.yml` for pushes to `chore/security-hardening` and pull requests targeting `main`.
+- The job uses read-only repository permissions, Node.js 20, pnpm 10.28.0, and `pnpm install --frozen-lockfile`.
+- The job generates Prisma Client locally, then runs `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
+- No GitHub secrets, Vercel secrets, production credentials, database URL, database connection, migration, seed, `db:push`, or data-write step is configured.
+- The workflow intentionally does not run `next build`; Vercel Preview already performs the configured production build and remains the build/deployment gate. This avoids inventing or exposing environment values in GitHub Actions.
+- Workflow file has not yet executed at the time of this record. Do not report CI green until the exact commit's Actions run and job logs are inspected.
+- Branch protection/required status checks were not changed. The branch currently reports protection disabled; enabling repository rules is outside this change.

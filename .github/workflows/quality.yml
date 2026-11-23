@@ -1,0 +1,52 @@
+name: Quality Checks
+
+on:
+  push:
+    branches:
+      - chore/security-hardening
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Test, typecheck, and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client (no database connection)
+        run: pnpm prisma generate
+
+      - name: Run unit tests
+        run: pnpm test
+
+      - name: Run TypeScript check
+        run: pnpm typecheck
+
+      - name: Run ESLint
+        run: pnpm lint
