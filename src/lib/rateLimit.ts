@@ -1,18 +1,25 @@
 import { prisma } from "@/lib/prisma";
 
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 5;
+const DEFAULT_MAX_ATTEMPTS = 5;
 
 type RateLimitRecord = {
   count: number;
   resetAt: Date;
 };
 
-export async function checkRateLimit(key: string): Promise<{
+export async function checkRateLimit(
+  key: string,
+  maxAttempts = DEFAULT_MAX_ATTEMPTS
+): Promise<{
   allowed: boolean;
   remaining: number;
   resetIn: number;
 }> {
+  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1) {
+    throw new Error("maxAttempts must be a positive safe integer");
+  }
+
   const now = new Date();
   const newResetAt = new Date(now.getTime() + WINDOW_MS);
 
@@ -24,7 +31,7 @@ export async function checkRateLimit(key: string): Promise<{
       ON CONFLICT ("key") DO UPDATE SET
         "count" = CASE
           WHEN "RateLimit"."resetAt" <= ${now} THEN 1
-          ELSE LEAST("RateLimit"."count" + 1, ${MAX_ATTEMPTS + 1})
+          ELSE LEAST("RateLimit"."count" + 1, ${maxAttempts + 1})
         END,
         "resetAt" = CASE
           WHEN "RateLimit"."resetAt" <= ${now} THEN ${newResetAt}
@@ -38,11 +45,11 @@ export async function checkRateLimit(key: string): Promise<{
 
     const resetAt = new Date(record.resetAt);
     const resetIn = Math.max(0, resetAt.getTime() - now.getTime());
-    const allowed = record.count <= MAX_ATTEMPTS;
+    const allowed = record.count <= maxAttempts;
 
     return {
       allowed,
-      remaining: Math.max(0, MAX_ATTEMPTS - record.count),
+      remaining: Math.max(0, maxAttempts - record.count),
       resetIn,
     };
   } catch (err) {

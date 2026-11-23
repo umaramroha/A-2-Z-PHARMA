@@ -6,6 +6,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/clientIp.mjs";
+import { createIpRateLimitKey } from "@/lib/rateLimitKeys.mjs";
+
+const IP_MAX_ATTEMPTS = 30;
 
 const loginSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -31,6 +35,23 @@ export async function POST(request: Request) {
 
     const { email, password } = parsed.data;
     const cleanEmail = email.toLowerCase();
+
+    // Apply the broader IP bucket first, then retain the stricter per-email limit.
+    const clientIp = getClientIp(request.headers);
+    const ipRateKey = createIpRateLimitKey("login", clientIp);
+    if (ipRateKey) {
+      const ipRateCheck = await checkRateLimit(ipRateKey, IP_MAX_ATTEMPTS);
+      if (!ipRateCheck.allowed) {
+        const minutes = Math.ceil(ipRateCheck.resetIn / 60000);
+        return NextResponse.json(
+          {
+            error: `Too many attempts from this network. Please try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const rateKey = `login:${cleanEmail}`;
     const rateCheck = await checkRateLimit(rateKey);
 
