@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/readJsonBody";
+import { isSafeBannerLink } from "@/lib/bannerLink.mjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getValidAdminSession } from "@/lib/adminSession";
@@ -14,8 +15,8 @@ const bannerSchema = z.object({
   subtitle: optionalText(300),
   imageUrl: z.string().trim().url().max(2048).refine((value) => value.startsWith("https://"), "Image URL must use HTTPS"),
   linkUrl: optionalText(2048).refine(
-    (value) => value === undefined || value === null || (value.startsWith("/") && !value.startsWith("//")) || /^https?:\/\//i.test(value),
-    "Link must be a relative path or valid web URL"
+    isSafeBannerLink,
+    "Link must be a same-site relative path or valid HTTP(S) URL"
   ),
   ctaText: optionalText(50),
   order: z.number().int().min(0).max(100000).default(0),
