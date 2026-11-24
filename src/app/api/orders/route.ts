@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/readJsonBody";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
@@ -83,12 +84,14 @@ export async function POST(request: Request) {
       );
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const bodyResult = await readJsonBody(request, 32768);
+    if (!bodyResult.ok) {
+      return NextResponse.json(
+        { error: bodyResult.error },
+        { status: bodyResult.status }
+      );
     }
+    const body: unknown = bodyResult.data;
 
     const parsed = orderInputSchema.safeParse(body);
     if (!parsed.success) {

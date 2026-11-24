@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/readJsonBody";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -31,12 +32,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const bodyResult = await readJsonBody(request, 4096);
+    if (!bodyResult.ok) {
+      return NextResponse.json(
+        { error: bodyResult.error },
+        { status: bodyResult.status }
+      );
     }
+    const body: unknown = bodyResult.data;
 
     const parsed = profileSchema.safeParse(body);
     if (!parsed.success) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/readJsonBody";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getValidAdminSession } from "@/lib/adminSession";
@@ -42,12 +43,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    const bodyResult = await readJsonBody(request, 8192);
+    if (!bodyResult.ok) {
+      return NextResponse.json(
+        { error: bodyResult.error },
+        { status: bodyResult.status }
+      );
     }
+    const body: unknown = bodyResult.data;
 
     const parsed = bannerSchema.safeParse(body);
     if (!parsed.success) {
