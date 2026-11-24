@@ -17,7 +17,7 @@ export default function ReturnsPolicyPage() {
           <h1 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">Cancellation, Return & Refund Policy</h1>
           <p className="mb-8 text-sm text-gray-500">Effective Date: 24/11/2026 | Last Updated: 24/11/2026</p>
           <div className="prose prose-sm max-w-none space-y-6 text-gray-700 md:prose-base">
-            <p>This policy applies to orders placed through A2Z Pharma. It is based on the cancellation, return and refund approach used by our Amroha Pharmacy reference website, adapted to A2Z Pharma's COD and manual UPI checkout.</p>
+            <p>This policy applies to orders placed through A2Z Pharma. It is based on the cancellation, return and refund approach used by our Amroha Pharmacy reference website, adapted to A2Z Pharma&apos;s COD and manual UPI checkout.</p>
             <h2>1. Order cancellation</h2>
             <p>You may request cancellation before dispatch by contacting us as soon as possible through WhatsApp, phone or email. Once an order has been dispatched, cancellation may not be possible. COD orders may be cancelled before dispatch. We may cancel or hold an order where a product is unavailable, order details cannot be verified, a listing error occurs, delivery is not serviceable, or cancellation is required by law or for security reasons.</p>
             <h2>2. Eligible return or replacement requests</h2>

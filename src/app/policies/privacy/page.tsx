@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
           <h1 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">Privacy Policy</h1>
           <p className="mb-8 text-sm text-gray-500">Effective Date: 24/11/2026 | Last Updated: 24/11/2026</p>
           <div className="prose prose-sm max-w-none space-y-6 text-gray-700 md:prose-base">
-            <p>This policy explains how A2Z Pharma ("we", "us" or "our") handles information when you visit our website, create an account, contact us or place an order. It should be read with our Cancellation, Return & Refund Policy and Shipping & Delivery Policy.</p>
+            <p>This policy explains how A2Z Pharma (&quot;we&quot;, &quot;us&quot; or &quot;our&quot;) handles information when you visit our website, create an account, contact us or place an order. It should be read with our Cancellation, Return & Refund Policy and Shipping & Delivery Policy.</p>
             <h2>1. Information we collect</h2>
             <p>Depending on how you use the website, we may collect your name, mobile number, email address, account details, delivery address, pincode, order and purchase details, messages you send us, and information needed to support or verify an order. Basic technical information such as browser, device, IP address and security logs may also be processed when you use the website.</p>
             <h2>2. How we use information</h2>
