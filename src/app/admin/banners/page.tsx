@@ -17,6 +17,14 @@ type Banner = {
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+]);
 
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -70,9 +78,18 @@ export default function AdminBannersPage() {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.currentTarget.files?.[0];
+    e.currentTarget.value = "";
     if (!file) return;
 
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      setMessage("❌ Choose a JPG, PNG, WebP, AVIF, or GIF image.");
+      return;
+    }
+    if (file.size === 0 || file.size > MAX_UPLOAD_BYTES) {
+      setMessage("❌ Image must be larger than 0 bytes and no more than 5 MB.");
+      return;
+    }
     if (!CLOUD_NAME || !UPLOAD_PRESET) {
       setMessage("❌ Cloudinary config missing on Vercel");
       return;
@@ -93,12 +110,22 @@ export default function AdminBannersPage() {
       );
 
       if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      setForm((f) => ({ ...f, imageUrl: data.secure_url }));
+      const data: unknown = await res.json();
+      const secureUrl =
+        typeof data === "object" &&
+        data !== null &&
+        "secure_url" in data &&
+        typeof data.secure_url === "string"
+          ? data.secure_url
+          : "";
+      if (!secureUrl.startsWith("https://")) {
+        throw new Error("Cloudinary returned an invalid image URL");
+      }
+      setForm((f) => ({ ...f, imageUrl: secureUrl }));
       setMessage("✅ Image uploaded");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setMessage("❌ Upload failed. Check preset is Unsigned.");
+      setMessage("❌ Upload failed. Check the image and Cloudinary preset.");
     } finally {
       setUploading(false);
     }
@@ -245,7 +272,7 @@ export default function AdminBannersPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
               onChange={handleUpload}
               className="hidden"
             />
