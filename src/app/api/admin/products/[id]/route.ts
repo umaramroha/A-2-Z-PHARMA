@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { readJsonBody } from "@/lib/readJsonBody";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -118,37 +119,63 @@ export async function PATCH(
     }
 
     const input = parsed.data;
-    const current = await prisma.product.findUnique({
-      where: { id: id },
-      select: { id: true, price: true, mrp: true },
-    });
 
-    if (!current) {
+    // Validate and update against one serializable snapshot so concurrent price/MRP
+    // edits cannot both pass validation using stale values.
+    const product = await prisma.$transaction(
+      async (tx) => {
+        const current = await tx.product.findUnique({
+          where: { id: id },
+          select: { id: true, price: true, mrp: true },
+        });
+
+        if (!current) throw new Error("PRODUCT_NOT_FOUND");
+
+        const nextPrice =
+          input.price === undefined
+            ? current.price
+            : new Prisma.Decimal(input.price);
+        const nextMrp =
+          input.mrp === undefined
+            ? current.mrp
+            : input.mrp === null
+              ? null
+              : new Prisma.Decimal(input.mrp);
+
+        if (nextMrp !== null && nextMrp.lessThan(nextPrice)) {
+          throw new Error("MRP_BELOW_PRICE");
+        }
+
+        return tx.product.update({
+          where: { id: id },
+          data: input,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    return NextResponse.json({ success: true, product });
+  } catch (error) {
+    if (error instanceof Error && error.message === "PRODUCT_NOT_FOUND") {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-
-    const nextPrice = input.price ?? Number(current.price);
-    const nextMrp =
-      input.mrp === undefined
-        ? current.mrp === null
-          ? null
-          : Number(current.mrp)
-        : input.mrp;
-
-    if (nextMrp !== null && nextMrp < nextPrice) {
+    if (error instanceof Error && error.message === "MRP_BELOW_PRICE") {
       return NextResponse.json(
         { error: "MRP cannot be lower than selling price" },
         { status: 400 }
       );
     }
-
-    const product = await prisma.product.update({
-      where: { id: id },
-      data: input,
-    });
-
-    return NextResponse.json({ success: true, product });
-  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2034"
+    ) {
+      return NextResponse.json(
+        { error: "Product was updated concurrently. Please refresh and try again." },
+        { status: 409 }
+      );
+    }
     if (isPrismaRecordNotFound(error)) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
