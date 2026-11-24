@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getRateLimitDecision } from "@/lib/rateLimitPolicy.mjs";
 
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const DEFAULT_MAX_ATTEMPTS = 5;
@@ -16,7 +17,7 @@ export async function checkRateLimit(
   remaining: number;
   resetIn: number;
 }> {
-  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1) {
+  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1 || maxAttempts >= Number.MAX_SAFE_INTEGER) {
     throw new Error("maxAttempts must be a positive safe integer");
   }
 
@@ -43,15 +44,12 @@ export async function checkRateLimit(
     const record = records[0];
     if (!record) throw new Error("Rate limit query returned no record");
 
-    const resetAt = new Date(record.resetAt);
-    const resetIn = Math.max(0, resetAt.getTime() - now.getTime());
-    const allowed = record.count <= maxAttempts;
-
-    return {
-      allowed,
-      remaining: Math.max(0, maxAttempts - record.count),
-      resetIn,
-    };
+    return getRateLimitDecision(
+      record.count,
+      maxAttempts,
+      new Date(record.resetAt).getTime(),
+      now.getTime(),
+    );
   } catch (err) {
     console.error("Rate limit error:", err);
     // Fail closed for authentication and registration when rate limiting is unavailable.

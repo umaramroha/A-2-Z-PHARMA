@@ -9,10 +9,11 @@ export function createIpRateLimitKey(namespace, ip) {
     throw new Error("A rate-limit namespace is required");
   }
 
-  if (typeof ip !== "string" || !ip.trim() || ip === "unknown") {
-    return null;
-  }
+  if (typeof ip !== "string") return null;
 
-  const digest = createHash("sha256").update(ip.trim()).digest("hex");
+  const normalizedIp = ip.trim();
+  if (!normalizedIp || normalizedIp === "unknown") return null;
+
+  const digest = createHash("sha256").update(normalizedIp).digest("hex");
   return `${namespace.trim()}-ip:${digest}`;
 }

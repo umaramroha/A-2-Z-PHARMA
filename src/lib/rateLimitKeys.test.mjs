@@ -23,6 +23,7 @@ test("customer and admin IP buckets use separate namespaces", () => {
 
 test("unknown or missing IPs do not create a shared bucket", () => {
   assert.equal(createIpRateLimitKey("login", "unknown"), null);
+  assert.equal(createIpRateLimitKey("login", "  unknown  "), null);
   assert.equal(createIpRateLimitKey("login", ""), null);
   assert.equal(createIpRateLimitKey("login", null), null);
 });
