@@ -97,6 +97,34 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const updatePaymentStatus = async (orderId: string, paymentStatus: string) => {
+    setUpdating(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        window.alert(data.error || "Payment status update failed. Please refresh and try again.");
+        return;
+      }
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId
+            ? { ...order, paymentStatus: data.order?.paymentStatus || paymentStatus }
+            : order
+        )
+      );
+    } catch (err) {
+      console.error("Payment status update error:", err);
+      window.alert("Could not update payment status. Please try again.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const filteredOrders =
     filter === "ALL" ? orders : orders.filter((o) => o.status === filter);
 
@@ -344,9 +372,52 @@ export default function AdminOrdersPage() {
                   </div>
 
                   {/* Payment */}
-                  <div className="text-xs text-gray-500">
-                    Payment Status:{" "}
-                    <span className="font-semibold">{order.paymentStatus}</span>
+                  <div className="rounded-md border bg-white p-3">
+                    <div className="text-sm text-gray-600">
+                      Payment Status:{" "}
+                      <span className="font-semibold text-gray-900">{order.paymentStatus}</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {order.paymentStatus === "PENDING" && (
+                        <button
+                          onClick={() => updatePaymentStatus(order.id, "PAID")}
+                          disabled={updating === order.id}
+                          className="rounded-full bg-green-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                        >
+                          {updating === order.id ? "Updating..." : "Mark Paid"}
+                        </button>
+                      )}
+                      {order.paymentMethod === "upi" && order.paymentStatus === "PENDING" && (
+                        <button
+                          onClick={() => updatePaymentStatus(order.id, "FAILED")}
+                          disabled={updating === order.id}
+                          className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 disabled:opacity-50"
+                        >
+                          Mark Failed
+                        </button>
+                      )}
+                      {order.paymentStatus === "FAILED" && (
+                        <button
+                          onClick={() => updatePaymentStatus(order.id, "PENDING")}
+                          disabled={updating === order.id}
+                          className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 disabled:opacity-50"
+                        >
+                          Reset to Pending
+                        </button>
+                      )}
+                      {order.paymentStatus === "PAID" && (
+                        <button
+                          onClick={() => updatePaymentStatus(order.id, "REFUNDED")}
+                          disabled={updating === order.id}
+                          className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 disabled:opacity-50"
+                        >
+                          Mark Refunded
+                        </button>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Verify UPI payment or collect COD before marking an order as paid.
+                    </p>
                   </div>
                 </div>
               )}

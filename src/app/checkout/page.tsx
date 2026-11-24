@@ -335,25 +335,25 @@ export default function CheckoutPage() {
                     className="w-4 h-4"
                   />
                   <div>
-                    <p className="font-semibold">📱 UPI Payment (QR Code)</p>
+                    <p className="font-semibold">📱 UPI Payment (Manual)</p>
                     <p className="text-xs text-gray-500">
-                      Scan QR code and pay instantly
+                      Request payment details through WhatsApp
                     </p>
                   </div>
                 </label>
 
                 {paymentMethod === "upi" && (
-                  <div className="mt-4 p-6 bg-gray-50 rounded-lg text-center border">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Scan this QR code to pay ₹{finalTotal}
+                  <div className="mt-4 rounded-lg border bg-gray-50 p-4">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Manual UPI payment
                     </p>
-                    <div className="w-48 h-48 mx-auto bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                      <p className="text-xs text-gray-400 px-4">
-                        QR Code will be added after payment integration
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4">
-                      After payment, place your order below
+                    <p className="mt-2 text-sm text-gray-600">
+                      Place your order, then tap the green WhatsApp button to request
+                      the verified UPI payment details for ₹{finalTotal}.
+                    </p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Your payment will remain pending until the payment is verified.
+                      Do not send money to an unverified UPI ID.
                     </p>
                   </div>
                 )}
