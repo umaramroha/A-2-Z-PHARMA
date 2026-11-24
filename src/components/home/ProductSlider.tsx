@@ -35,8 +35,8 @@ export default function ProductSlider({
 
   useEffect(() => {
     const url = category
-      ? `/api/products?category=${category}`
-      : "/api/products";
+      ? `/api/products?category=${encodeURIComponent(category)}&pageSize=${limit}`
+      : `/api/products?pageSize=${limit}`;
     fetch(url)
       .then((r) => r.json())
       .then((d) => setProducts((d.products || []).slice(0, limit)))
