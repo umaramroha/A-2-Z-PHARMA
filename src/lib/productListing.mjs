@@ -5,7 +5,7 @@ const MAX_PRICE = 10_000_000;
 
 function parsePositiveInteger(value, fallback, maximum) {
   if (value === null) return fallback;
-  if (!/^\\d+$/.test(value)) return null;
+  if (!/^\d+$/.test(value)) return null;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 1 && parsed <= maximum
     ? parsed
@@ -14,7 +14,7 @@ function parsePositiveInteger(value, fallback, maximum) {
 
 function parsePrice(value) {
   if (value === null) return null;
-  if (!/^\\d+(?:\\.\\d{1,2})?$/.test(value)) return Number.NaN;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return Number.NaN;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 && parsed <= MAX_PRICE
     ? parsed
