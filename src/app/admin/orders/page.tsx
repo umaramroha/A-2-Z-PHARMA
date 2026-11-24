@@ -85,11 +85,19 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (res.ok) {
-        setOrders((prev) =>
-          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-        );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        window.alert(data.error || "Order status update failed. Please refresh and try again.");
+        return;
       }
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId
+            ? { ...order, status: data.order?.status || newStatus }
+            : order
+        )
+      );
     } catch (err) {
       console.error("Update error:", err);
     } finally {
