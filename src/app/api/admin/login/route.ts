@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { adminSessionOptions, type AdminSessionData } from "@/lib/adminSession";
 import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/clientIp.mjs";
-import { createIpRateLimitKey } from "@/lib/rateLimitKeys.mjs";
+import { createEmailRateLimitKey, createIpRateLimitKey } from "@/lib/rateLimitKeys.mjs";
 
 const IP_MAX_ATTEMPTS = 30;
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const rateKey = `admin-login:${cleanEmail}`;
+    const rateKey = createEmailRateLimitKey("admin-login", cleanEmail);
     const rateCheck = await checkRateLimit(rateKey);
 
     if (!rateCheck.allowed) {
