@@ -401,3 +401,36 @@ No CSP or header code was changed during this audit.
 - No Prisma schema, migration, SQL, database query, or database write was performed.
 - No product was purchased or reserved.
 - No production deployment, merge, or promotion was performed.
+
+
+## Follow-up verification — 24 November 2026
+
+**Verified branch head:** `4905ad7a05f9e3aa5fa0d6cfb4b22011aa5dd792` (`chore/security-hardening`). This follow-up records changes made after the earlier COM-01/COM-02/COM-04 snapshots above. Earlier sections remain historical findings for their explicitly named inspected commits; do not read their old UI observations as the current state.
+
+### Current checkout and payment UI
+
+- The checkout no longer displays the old “QR code will be added later” placeholder. The current UPI option is labelled **UPI Payment (Manual)**.
+- The current instructions tell the customer to place the order and use the global WhatsApp button to request verified UPI payment details for the order total.
+- The UI warns customers not to send money to an unverified UPI ID and says payment remains pending until verified.
+- No UPI ID, QR code, payment intent, gateway, transaction reference, or automated verification has been added. UPI is therefore a manual contact-and-verification workflow, not an online payment integration.
+- `POST /api/orders` accepts only `cod` and `upi`; it creates both with `paymentStatus: PENDING` and does not mark UPI paid based on the selected method.
+
+### Current admin payment and order-status UI
+
+- The admin orders page now exposes manual payment-status actions: Mark Paid, Mark Failed, Reset to Pending, and Mark Refunded.
+- The admin order detail PATCH route validates admin session, validates requested states, checks the shared transition rules, and performs a compare-and-set update inside a Prisma transaction.
+- The latest order-status UI fix parses the response and displays a failure alert instead of silently leaving an unsuccessful status change unexplained. It updates local state only after a successful response.
+- Payment status remains an admin-entered/manual state. The application does not verify bank/UPI receipts itself.
+- Existing payment transition rules still do not enforce method-specific invariants or cross-check order status against payment status. Admins must verify the actual payment and follow the business's approved cancellation/refund process before changing these fields; the source does not establish that policy.
+
+### Current WhatsApp and RateLimit observations
+
+- The customer root layout includes the global WhatsApp button, so it is available across customer-facing routes without duplicating page-specific buttons. The current component links to the configured A-2-Z WhatsApp contact.
+- The raw `RateLimit` table remains an external database dependency. `prisma/schema.prisma` does not declare it; `scripts/create-ratelimit-table.js` defines the expected table/index and reads a local `.env` `DATABASE_URL` before connecting to the configured database.
+- No database connection, table inspection, setup script, SQL, migration, seed, or database write was performed. Table existence and runtime authentication availability remain **unverified**. Because rate-limit errors fail closed, this remains a launch-critical availability check to perform through an explicitly approved read-only provider/schema inspection.
+
+### Verification boundary
+
+The GitHub Actions quality checks and the Vercel Preview build for commit `4905ad7a05f9e3aa5fa0d6cfb4b22011aa5dd792` both completed successfully; the matching Preview reached READY. This confirms the recorded CI checks and deployment build, not live database connectivity, payment receipt verification, or complete end-to-end customer/admin journeys.
+
+No production deployment, merge, promotion, environment change, or database operation was performed for this follow-up.
