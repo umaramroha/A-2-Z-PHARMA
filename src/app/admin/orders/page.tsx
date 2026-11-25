@@ -386,7 +386,7 @@ export default function AdminOrdersPage() {
                       <span className="font-semibold text-gray-900">{order.paymentStatus}</span>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {order.paymentStatus === "PENDING" && (
+                      {order.paymentStatus === "PENDING" && order.status !== "CANCELLED" && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "PAID")}
                           disabled={updating === order.id}
@@ -413,7 +413,7 @@ export default function AdminOrdersPage() {
                           Reset to Pending
                         </button>
                       )}
-                      {order.paymentStatus === "PAID" && (
+                      {order.paymentStatus === "PAID" && order.status === "CANCELLED" && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "REFUNDED")}
                           disabled={updating === order.id}

@@ -8,6 +8,7 @@ import {
   VALID_STATUSES,
   canTransitionPayment,
   canTransitionStatus,
+  canSetPaymentStatusForOrder,
 } from "@/lib/orderTransitions.mjs";
 
 const patchSchema = z
@@ -96,6 +97,18 @@ export async function PATCH(
 
       if (!current) throw new Error("ORDER_NOT_FOUND");
 
+      const nextOrderStatus = input.status ?? current.status;
+      if (
+        input.paymentStatus &&
+        !canSetPaymentStatusForOrder(
+          nextOrderStatus as (typeof VALID_STATUSES)[number],
+          current.paymentMethod,
+          input.paymentStatus
+        )
+      ) {
+        throw new Error("INVALID_PAYMENT_STATUS_FOR_ORDER");
+      }
+
       const updateData: { status?: string; paymentStatus?: string } = {};
 
       if (input.status) {
@@ -176,6 +189,13 @@ export async function PATCH(
     if (error instanceof Error) {
       if (error.message === "ORDER_NOT_FOUND") {
         return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+
+      if (error.message === "INVALID_PAYMENT_STATUS_FOR_ORDER") {
+        return NextResponse.json(
+          { error: "Payment status is not valid for this order status or payment method." },
+          { status: 409 }
+        );
       }
 
       if (
