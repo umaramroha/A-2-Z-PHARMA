@@ -67,7 +67,10 @@ test("payment status must remain consistent with cancellation and payment method
   assert.equal(canSetPaymentStatusForOrder("PROCESSING", "cod", "PAID"), false);
   assert.equal(canSetPaymentStatusForOrder("DELIVERED", "cod", "PAID"), true);
   assert.equal(canSetPaymentStatusForOrder("PENDING", "upi", "REFUNDED"), false);
+  assert.equal(canSetPaymentStatusForOrder("PROCESSING", "upi", "REFUNDED"), false);
   assert.equal(canSetPaymentStatusForOrder("CANCELLED", "upi", "REFUNDED"), true);
+  assert.equal(canSetPaymentStatusForOrder("DELIVERED", "upi", "REFUNDED"), true);
+  assert.equal(canSetPaymentStatusForOrder("DELIVERED", "cod", "REFUNDED"), true);
 });
 
 

@@ -333,6 +333,11 @@ export default function OrderTrackingPage() {
                 Refund is not automatic. Contact support to arrange it.
               </p>
             )}
+            {order.paymentStatus === "REFUNDED" && (
+              <p className="text-xs font-medium text-green-700">
+                A refund has been recorded for this order.
+              </p>
+            )}
           </div>
         </div>
 

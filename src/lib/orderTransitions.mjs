@@ -36,7 +36,11 @@ export function canSetPaymentStatusForOrder(orderStatus, paymentMethod, nextPaym
     if (paymentMethod === "cod" && orderStatus !== "DELIVERED") return false;
   }
   if (nextPaymentStatus === "FAILED" && paymentMethod !== "upi") return false;
-  if (nextPaymentStatus === "REFUNDED" && orderStatus !== "CANCELLED") return false;
+  if (
+    nextPaymentStatus === "REFUNDED" &&
+    orderStatus !== "CANCELLED" &&
+    orderStatus !== "DELIVERED"
+  ) return false;
   return true;
 }
 

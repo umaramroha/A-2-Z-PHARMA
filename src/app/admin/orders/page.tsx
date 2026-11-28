@@ -112,6 +112,13 @@ export default function AdminOrdersPage() {
   };
 
   const updatePaymentStatus = async (orderId: string, paymentStatus: string) => {
+    if (paymentStatus === "REFUNDED") {
+      const confirmed = window.confirm(
+        "Confirm that the refund has actually been sent to the customer before marking this order as refunded.",
+      );
+      if (!confirmed) return;
+    }
+
     setUpdating(orderId);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
@@ -440,7 +447,8 @@ export default function AdminOrdersPage() {
                           Reset to Pending
                         </button>
                       )}
-                      {order.paymentStatus === "PAID" && order.status === "CANCELLED" && (
+                      {order.paymentStatus === "PAID" &&
+                        (order.status === "CANCELLED" || order.status === "DELIVERED") && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "REFUNDED")}
                           disabled={updating === order.id}
@@ -451,7 +459,7 @@ export default function AdminOrdersPage() {
                       )}
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
-                      Verify UPI payment or collect COD before marking an order as paid.
+                      Verify UPI before shipping. Mark COD as paid only after delivery and collection.
                     </p>
                   </div>
                 </div>
