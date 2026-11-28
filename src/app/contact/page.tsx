@@ -73,7 +73,7 @@ ${formData.message}`;
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
                   <a
-                    href={`tel:${siteConfig.phoneRaw}`}
+                    href={`tel:+${siteConfig.phoneRaw}`}
                     className="text-gray-600 text-sm hover:text-primary"
                   >
                     {siteConfig.phone}

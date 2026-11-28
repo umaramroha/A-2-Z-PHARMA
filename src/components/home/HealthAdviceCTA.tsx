@@ -19,7 +19,7 @@ export default function HealthAdviceCTA() {
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:ml-6 lg:flex-col">
           <a
-            href={`tel:${siteConfig.phoneRaw}`}
+            href={`tel:+${siteConfig.phoneRaw}`}
             className="btn-secondary flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-bold text-primary"
           >
             📞 Call {siteConfig.phone}
