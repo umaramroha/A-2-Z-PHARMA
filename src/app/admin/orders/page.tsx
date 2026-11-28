@@ -429,7 +429,9 @@ export default function AdminOrdersPage() {
                           {updating === order.id ? "Updating..." : "Mark Paid"}
                         </button>
                       )}
-                      {order.paymentMethod === "upi" && order.paymentStatus === "PENDING" && (
+                      {order.paymentMethod === "upi" &&
+                        order.paymentStatus === "PENDING" &&
+                        canMoveOrderWithPayment(order.status, order.paymentMethod, "FAILED") && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "FAILED")}
                           disabled={updating === order.id}
@@ -438,7 +440,8 @@ export default function AdminOrdersPage() {
                           Mark Failed
                         </button>
                       )}
-                      {order.paymentStatus === "FAILED" && (
+                      {order.paymentStatus === "FAILED" &&
+                        canMoveOrderWithPayment(order.status, order.paymentMethod, "PENDING") && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "PENDING")}
                           disabled={updating === order.id}
