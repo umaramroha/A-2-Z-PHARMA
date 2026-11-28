@@ -13,7 +13,7 @@ Build repeatable tests around deterministic business logic before database-backe
 ## Initial coverage
 - Exhaustively check every pair of existing order statuses. The current predicate permits any forward-rank transition among PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED, including skipped intermediate stages; cancellation is permitted only from PENDING, CONFIRMED, or PROCESSING. Reject same-state, backward, post-shipment cancellation, and transitions out of terminal states. This records existing behavior; it does not decide whether skipping stages is desirable business policy.
 - Exhaustively check every pair of existing payment statuses: PENDING → PAID/FAILED; FAILED → PENDING; PAID → REFUNDED; reject all other and same-state transitions.
-- These tests preserve current behavior. They do not add COD/UPI-specific rules or cross-validate order/payment status, both documented as unresolved COM-02 policy gaps.
+- Additional tests now cover COD/UPI-specific payment guards and cross-validation against order status. These tests exercise pure transition logic only; they do not prove live payment verification or refund execution.
 
 ## Verification commands
 ```sh
@@ -31,15 +31,20 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - Cart, checkout, and the order API use the shared calculator. The order API continues to derive subtotal from database product prices and never trusts client totals.
 - Cart's empty-cart presentation remains free; non-empty carts use the shared rule.
 
+## Additional deterministic coverage now present
+- `src/lib/phoneValidation.mjs` and tests cover valid Indian 10-digit numbers, optional +91 formatting, punctuation, invalid prefixes/lengths, and non-phone characters.
+- `src/lib/passwordPolicy.mjs` and tests enforce bcrypt's 72 UTF-8-byte limit, including multibyte characters; registration requires at least 8 characters.
+- Customer order cancellation uses the tested order-status transition predicate and a transactional compare-and-set in the API.
+
 ## Next test candidates (not covered yet)
-1. Order-input validation boundaries and duplicate product-ID quantity aggregation after safe extraction.
-3. WhatsApp message/link encoding and quantity/total formatting.
-4. API authorization and customer ownership using isolated mocks/test doubles.
-5. Transaction rollback, concurrent stock reservation, and duplicate cancellation only with a disposable isolated test DB or purpose-built harness; never Preview/Production data.
-6. Browser checkout/admin flows only with an approved test environment and test accounts.
+1. Order-input validation boundaries and duplicate product-ID quantity aggregation as pure helpers.
+2. WhatsApp message/link encoding and quantity/total formatting.
+3. API authorization and customer ownership using isolated mocks/test doubles.
+4. Transaction rollback, concurrent stock reservation, and duplicate cancellation only with a disposable isolated test DB or purpose-built harness; never Preview/Production data.
+5. Browser checkout/admin flows only with an approved test environment and test accounts.
 
 ## Explicitly out of scope
-- No production/Preview DB connection, SQL, migration, seed, `db:push`, or data write.
+- No production/Preview DB connection, SQL, migration, seed, `db:push`, or data write. Vercel metadata currently scopes one `DATABASE_URL` record to both Production and Preview, and DB isolation is not confirmed; do not use Preview for state-changing tests.
 - No gateway, COD/UPI, stock, or order policy changes. Delivery fee values and threshold are unchanged; the existing rule was centralized and tested.
 - No production deployment, branch merge, or environment/secret modification.
 
@@ -66,3 +71,10 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 - GitHub Actions run `45134250957` for commit `c728003f5bc771f06fbe90a71493dae5811ff4be` passed `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
 - Matching Vercel Preview `dpl_J7UNtiLmZxYMNNkgw29qJsKWuTHc` for that exact commit reached READY after successful Prisma generation, Next.js compilation, lint/type-check phase, and 34/34 static page generation.
 - This baseline is superseded for subsequent commits; inspect each new commit's Actions run and Vercel Preview independently.
+
+
+## Current verified baseline — 2026-11-28
+
+- GitHub Actions run `46136587878` for commit `dda2fefcd4bac2af95e245e44741b32636f6afd7` completed successfully: unit tests, TypeScript check and ESLint all passed.
+- Matching Vercel Preview deployment `dpl_73DCPvSnMV1uGZv7ffumyZ9dVFPD` for the exact same commit reached READY after Next.js production build and 39/39 static pages generated.
+- This is build/CI verification only. No authenticated browser checkout, order placement, cancellation, payment, stock mutation, or database-backed runtime test was performed.

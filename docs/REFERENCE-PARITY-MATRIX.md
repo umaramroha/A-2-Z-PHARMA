@@ -1,6 +1,6 @@
 # Reference Parity Matrix
 
-Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `738d93e` versus read-only reference `Amroha-Pharmacy-v2` branch `main` at the inspected snapshot.
+Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `dda2fefcd4bac2af95e245e44741b32636f6afd7` versus read-only reference `Amroha-Pharmacy-v2` at pinned snapshot `e8469472d95caecc170fed1a63b47990bbc3aed4`.
 
 ## How to read this matrix
 - **Present (route/file)** means a corresponding route or model was found in the repository tree. It does not prove the flow works end to end.
@@ -19,14 +19,14 @@ Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `7
 | Customer profile | `/profile` and update-profile API present | Same | Present in both |
 | Cart and checkout | `/cart`, `/checkout` present | Same | Present in both; detailed checkout behavior not compared |
 | Orders and order detail | `/orders`, `/orders/[id]`, order APIs present | Same, plus quote, cancel and payment-switch endpoints | Partial / verify |
-| Order cancellation | No dedicated `/api/orders/[id]/cancel` route in target tree; behavior may be elsewhere | Dedicated cancel route present | Reference-only route; inspect target order route before deciding |
+| Order cancellation | Customer cancel UI and `POST /api/orders/[id]/cancel` now present; own-order check and transactional compare-and-set stock restore | Dedicated cancel route and richer refund-pending states present | Present in both; target uses its own limited payment states and manual refund handling |
 | Payment method switching | No dedicated payment-switch route found | Dedicated switch-payment route present | Reference-only route |
 | Delivery quote / zone pricing | No dedicated quote route found | Quote route and delivery/pricing modules present | Reference-only route; compare A-2-Z delivery rules before considering |
 | Wishlist | No wishlist route/component found in target tree | Wishlist page and context found | Reference-only |
 | Blogs | Blog listing and slug routes present | Blog listing, slug and Hindi slug routes present | Partial / verify; Hindi blog route is reference-only |
 | Concerns / health categories | No concerns routes/components found | Concerns listing and slug routes plus data found | Reference-only |
 | Health tips | No equivalent health-tips component/data tree found | Health tips pages/components/data found | Reference-only |
-| Legal/policy pages | No dedicated policy routes found | Disclaimer, privacy, returns, shipping and terms routes found | Reference-only |
+| Legal/policy pages | Privacy, Terms, Medical/Product Disclaimer, Shipping/Delivery and Cancellation/Return/Refund routes present; footer/checkout links added | Same core policy pages present | Present in both; target copy is A2Z-specific and still requires owner/legal review |
 | Contact/about | Both have about and contact routes | Both have about and contact routes | Present in both |
 
 ## Admin and operations
@@ -35,7 +35,7 @@ Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `7
 |---|---|---|---|
 | Admin authentication/session | Admin login/logout/me APIs and admin session helper present | Same | Present in both |
 | Admin dashboard/stats | Dashboard and stats route present | Same | Present in both |
-| Admin product management | Admin product page and CRUD APIs present | Same | Present in both |
+| Admin product management | Admin product page and CRUD APIs; single Cloudinary image upload plus URL field | Admin product page supports Cloudinary main image and multi-image gallery plus medicine metadata fields | Partial; target has one image only and no gallery/structured medicine metadata |
 | Admin order management | Admin orders page and APIs present | Same | Present in both |
 | Admin banners | Admin banners page and APIs present | Same | Present in both |
 | Admin settings | Admin settings page and API present | Same | Present in both |
@@ -51,7 +51,7 @@ Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `7
 The target schema currently contains Product, Order, OrderItem, AdminUser, Customer, and Banner models.
 
 The inspected reference schema additionally contains:
-- Product gallery and medicine-information fields (images, manufacturer, composition, usage, warnings, batch number, expiry date).
+- Product gallery and medicine-information fields (images, manufacturer, composition, usage, warnings, batch number, expiry date); target now has a single-image Cloudinary upload but no gallery or structured fields.
 - Order discounts, coupon, delivery-zone, courier/tracking, and payment-reference fields.
 - Customer verification, password-reset, follow-up, and marketing-consent fields.
 - Admin password-change timestamp.
@@ -76,3 +76,12 @@ These are **not automatic migration recommendations**. They affect database shap
 - Do not bulk-copy reference files or schema.
 - Do not introduce payment gateways, marketing emails, coupons, tracking integrations, or other external services merely because the reference has them.
 - Do not run database migrations, `prisma db push`, seed scripts, or database writes as part of this comparison.
+
+
+## Current target status update (2026-11-28)
+
+- Customer order cancellation is no longer reference-only: A2Z has a customer-owned cancellation endpoint/UI with compare-and-set stock restoration.
+- Order/payment transitions are now method-aware and cross-validated for the existing COD/manual-UPI model. Payment verification and refunds remain manual.
+- A2Z product admin supports a single Cloudinary image upload. Multi-image gallery and structured medicine metadata remain deliberately unimplemented because they require additional schema/compliance decisions.
+- Policy pages now exist in A2Z; do not copy reference business wording or legal details. Owner/legal review remains required.
+- The Amroha repository remains read-only; no reference files or database content were modified.

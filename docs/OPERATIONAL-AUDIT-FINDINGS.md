@@ -132,3 +132,24 @@ Record the business/provider decision first: approved sender identity and suppor
 - No product UI/API code or business behavior was changed.
 - No production deployment, merge, or promotion was performed.
 
+
+
+## Current status update — 2026-11-28 (source commit `dda2fefcd4bac2af95e245e44741b32636f6afd7`)
+
+### OPS-01 — Policies and customer-facing claims
+
+- A2Z now has Privacy, Terms & Conditions, Medical/Product Disclaimer, Shipping & Delivery, and Cancellation/Return/Refund pages. Footer and checkout policy links are present.
+- Returns copy no longer refers to the Amroha reference business and no longer promises unconfirmed 48-hour/7-day reporting windows or a fixed 3–5 business-day refund initiation period.
+- About page no longer displays unverified customer/product statistics, “100% authentic” or free-expert-consultation claims. Homepage/product trust labels and static five-star/“Verified product” placeholders were removed. Metadata/footer copy no longer makes unverified authenticity or all-India delivery promises.
+- Blog articles were rewritten as general educational information, unsafe cure/immunity/no-side-effect claims removed, a medical disclaimer linked, and broken blog-card slugs corrected.
+- Legal operator identity, licence/registration details, exact returns/refund policy, delivery serviceability and grievance process still require owner confirmation and qualified legal/compliance review. No legal status is certified by these code changes.
+
+### OPS-02 — Account recovery and email
+
+- Customer registration now enforces a minimum of 8 characters and a 72 UTF-8-byte bcrypt limit. No forgot-password, reset-password, email-verification flow or email provider integration was added. Existing accounts were not modified.
+
+### OPS-03 — Product image and medicine data
+
+- Admin product form now supports a single Cloudinary upload into the `a2z-products` folder while preserving the manual image URL field. No gallery, structured composition/usage/warning/batch/expiry fields, or Prisma schema change was added.
+- Vercel metadata lists Cloudinary cloud-name and upload-preset variables for Production only; Preview upload behavior was not tested. The existing unsigned preset is reused; no Cloudinary preset or environment configuration was changed.
+- Static ratings and unsupported verification/authenticity claims were removed. Product-specific medicine details still need real owner-approved data and any required compliance review.

@@ -46,7 +46,7 @@ No customer password-change endpoint was found in the inspected API tree. Custom
 - Customer registration uses `register:<IP>`. The IP is selected from the first `x-forwarded-for` value, falling back to `x-real-ip`, then `unknown`. The source comment itself notes that proxy configuration must be trusted; whether the deployed proxy sanitizes these headers was not established by this source-only audit.
 - The helper catches query failures and returns `allowed: false` (fail closed). Therefore an unavailable/missing/incompatible table can block customer login, registration, and admin login.
 - `prisma/schema.prisma` has no `RateLimit` model. This does not prove the raw table is absent; it may have been provisioned independently.
-- `scripts/create-ratelimit-table.js` contains SQL to create the expected table with a text primary key, integer counter, timestamp-with-time-zone reset value, and an index on `resetAt`. The script reads a local `.env` file and connects to the configured database.
+- `scripts/create-ratelimit-table.js` contains SQL to create the expected table with a text primary key, integer counter, timestamp(3) without time zone reset value, and an index on `resetAt`. The script reads a local `.env` file and connects to the configured database.
 
 ### Impact and risk
 
@@ -434,3 +434,12 @@ No CSP or header code was changed during this audit.
 The GitHub Actions quality checks and the Vercel Preview build for commit `4905ad7a05f9e3aa5fa0d6cfb4b22011aa5dd792` both completed successfully; the matching Preview reached READY. This confirms the recorded CI checks and deployment build, not live database connectivity, payment receipt verification, or complete end-to-end customer/admin journeys.
 
 No production deployment, merge, promotion, environment change, or database operation was performed for this follow-up.
+
+
+## Current status update — 2026-11-28 (source commit `dda2fefcd4bac2af95e245e44741b32636f6afd7`)
+
+- **SEC-02 RateLimit backing table:** The user supplied Neon SQL Editor output showing successful creation of `public."RateLimit"` and index `RateLimit_resetAt_idx`. This is user-provided evidence, not an independent query by the assistant. Vercel environment metadata shows a single `DATABASE_URL` variable record scoped to both Production and Preview. Secret values were not decrypted; the Neon database used by the SQL Editor cannot be proven to be the same database configured in Vercel. The assistant did not run SQL, connect to the DB, or perform writes.
+- **SEC-04 headers:** HSTS is now present in `next.config.mjs` with a one-year max-age and without includeSubDomains/preload. Preview builds are READY, but the actual HTTP response headers have not been independently inspected. CSP remains deferred pending an image-origin and runtime inventory.
+- **Customer credentials:** Registration now requires at least 8 characters and rejects passwords above 72 UTF-8 bytes to avoid bcrypt prefix truncation. Existing login behavior and existing customer passwords were not changed. No customer password-reset/change or email-verification workflow exists.
+- **Order cancellation:** Customer cancellation is authenticated and owner-scoped, restricted to PENDING/CONFIRMED/PROCESSING, and uses a transactional compare-and-set before restoring stock. Runtime concurrency/rollback tests remain outstanding because no isolated database is configured/confirmed.
+- **Environment boundary:** Vercel metadata lists DATABASE_URL and SESSION_PASSWORD for both Production and Preview; values were not read. No environment variables or secrets were changed. Do not run state-changing Preview tests until DB isolation is established.
