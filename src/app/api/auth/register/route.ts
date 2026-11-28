@@ -10,12 +10,16 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/clientIp.mjs";
 import { createIpRateLimitKey } from "@/lib/rateLimitKeys.mjs";
 import { isValidIndianMobile } from "@/lib/phoneValidation.mjs";
+import { isWithinBcryptByteLimit } from "@/lib/passwordPolicy.mjs";
 
 const registrationSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(254),
   mobile: z.string().trim().max(20).refine(isValidIndianMobile, "Enter a valid 10-digit Indian mobile number"),
-  password: z.string().min(6).max(128),
+  password: z.string().min(8).max(128).refine(
+    isWithinBcryptByteLimit,
+    "Password must not exceed 72 UTF-8 bytes",
+  ),
 });
 
 function isUniqueConstraintError(error: unknown) {

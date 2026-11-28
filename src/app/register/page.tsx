@@ -22,8 +22,13 @@ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (new TextEncoder().encode(formData.password).length > 72) {
+      setError("Password must not exceed 72 UTF-8 bytes");
       return;
     }
 
@@ -129,7 +134,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 className="input-modern"
-                placeholder="Min 6 characters"
+                placeholder="At least 8 characters"
+                minLength={8}
+                maxLength={128}
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -146,6 +154,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                 }
                 className="input-modern"
                 placeholder="Re-enter password"
+                minLength={8}
+                maxLength={128}
+                autoComplete="new-password"
                 required
               />
             </div>
