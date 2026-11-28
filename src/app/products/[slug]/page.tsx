@@ -204,6 +204,13 @@ export default function ProductDetailPage() {
               {product.description || "No description available."}
             </p>
 
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+              Product information is general and does not replace medical advice. Check the product label and consult a qualified healthcare professional before use.{" "}
+              <Link href="/policies/disclaimer" className="font-semibold underline">
+                Read the Medical & Product Disclaimer
+              </Link>.
+            </div>
+
             {/* Available order information */}
             <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-gray-50 p-3 text-center">
               <div>
