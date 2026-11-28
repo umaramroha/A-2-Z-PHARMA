@@ -12,6 +12,7 @@ import {
   hasExcessOrderQuantity,
 } from "@/lib/orderQuantities.mjs";
 import { isValidIndianMobile } from "@/lib/phoneValidation.mjs";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const orderInputSchema = z.object({
   customerName: z.string().trim().min(1).max(100),
@@ -108,6 +109,20 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Maximum quantity per product is 100" },
         { status: 400 }
+      );
+    }
+
+    // Limit repeated order attempts per customer to reduce stock-reservation abuse.
+    const orderRateLimit = await checkRateLimit(`order:create:${session.userId}`, 5);
+    if (!orderRateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many order attempts. Please wait before trying again." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.max(1, Math.ceil(orderRateLimit.resetIn / 1000))),
+          },
+        },
       );
     }
 

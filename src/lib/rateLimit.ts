@@ -52,7 +52,7 @@ export async function checkRateLimit(
     );
   } catch (err) {
     console.error("Rate limit error:", err);
-    // Fail closed for authentication and registration when rate limiting is unavailable.
+    // Fail closed for security-sensitive operations when rate limiting is unavailable.
     return { allowed: false, remaining: 0, resetIn: WINDOW_MS };
   }
 }
