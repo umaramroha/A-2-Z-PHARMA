@@ -48,6 +48,7 @@ export default function AdminProductsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchProducts = useCallback(async () => {
@@ -57,10 +58,15 @@ export default function AdminProductsPage() {
         router.push("/admin/login");
         return;
       }
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice({ ok: false, text: data.error || "Could not load products." });
+        return;
+      }
       setProducts(data.products || []);
     } catch (err) {
       console.error("Failed to fetch products", err);
+      setNotice({ ok: false, text: "Network error. Could not load products." });
     } finally {
       setLoading(false);
     }
@@ -138,6 +144,7 @@ export default function AdminProductsPage() {
     });
     setShowForm(true);
     setError("");
+    setNotice(null);
   };
 
   const handleNew = () => {
@@ -145,6 +152,7 @@ export default function AdminProductsPage() {
     setFormData(EMPTY_FORM);
     setShowForm(true);
     setError("");
+    setNotice(null);
   };
 
   const handleCancel = () => {
@@ -190,36 +198,56 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? Ye action undo nahi hoga.`)) return;
+    const confirmed = window.confirm(
+      `Remove "${name}"? If it has order history, it will be deactivated to preserve past orders. Otherwise, it will be permanently deleted.`,
+    );
+    if (!confirmed) return;
 
+    setNotice(null);
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        await fetchProducts();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice({ ok: false, text: data.error || "Could not remove this product." });
+        return;
       }
+
+      setNotice({ ok: true, text: data.message || "Product removed successfully." });
+      await fetchProducts();
     } catch (err) {
       console.error("Delete error:", err);
+      setNotice({ ok: false, text: "Network error. The product was not removed." });
     }
   };
 
   const handleToggleActive = async (product: Product) => {
+    setNotice(null);
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !product.isActive }),
       });
-      if (res.ok) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === product.id ? { ...p, isActive: !p.isActive } : p
-          )
-        );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice({ ok: false, text: data.error || "Could not update product visibility." });
+        return;
       }
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, isActive: !product.isActive } : p
+        )
+      );
+      setNotice({
+        ok: true,
+        text: product.isActive ? "Product hidden from the store." : "Product is now visible in the store.",
+      });
     } catch (err) {
       console.error("Toggle error:", err);
+      setNotice({ ok: false, text: "Network error. Product visibility was not changed." });
     }
   };
 
@@ -261,6 +289,15 @@ export default function AdminProductsPage() {
           </button>
         )}
       </div>
+
+      {notice && (
+        <div
+          role={notice.ok ? "status" : "alert"}
+          className={`mb-5 rounded-lg border p-3 text-sm ${notice.ok ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-700"}`}
+        >
+          {notice.text}
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
