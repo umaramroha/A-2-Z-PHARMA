@@ -4,60 +4,56 @@ import Link from "next/link";
 const blogs = [
   {
     id: "1",
-    title: "Ayurveda vs Unani Medicine: Dono Me Kya Antar Hai?",
+    title: "Ayurveda and Unani: An Introduction to Two Traditional Systems",
     slug: "ayurveda-vs-unani-medicine",
-    excerpt: "Natural healing ke daur me Ayurveda aur Unani dono popular hain. Jane inke basic differences, origin aur sahi chikitsa kaise chune.",
+    excerpt: "A brief overview of the different traditional frameworks used in Ayurveda and Unani, and why qualified guidance matters.",
     image: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=800",
     date: "25 Sep 2026",
-    author: "A2Z Pharma Team",
   },
   {
     id: "2",
-    title: "Paachan Tantra Ko Mazboot Banane Ke Top 5 Herbal Nuskhe",
+    title: "Everyday Digestive Health: Habits and When to Seek Care",
     slug: "digestive-health-herbal-remedies",
-    excerpt: "Gas, acidity aur constipation ka permanent samadhan — Ayurvedic aur Unani herbal nuskhe jo pait ko saaf aur healthy rakhte hain.",
+    excerpt: "Learn about everyday habits that support digestive wellbeing and symptoms that should be discussed with a healthcare professional.",
     image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800",
     date: "20 Sep 2026",
-    author: "A2Z Pharma Team",
   },
   {
     id: "3",
-    title: "Badalte Mausam Me Immunity Badhane Ke Best Aushadhiya",
+    title: "Seasonal Health: Practical Habits and Responsible Product Use",
     slug: "immunity-boosters-ayurveda-unani",
-    excerpt: "Seasonal diseases aur viral infections se bachne ke liye Ayurveda aur Unani ke powerful immunity boosters — Chyawanprash, Khamira Marwareed aur more.",
+    excerpt: "A practical look at everyday seasonal-health habits and the limits of supplements and traditional products.",
     image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800",
     date: "15 Sep 2026",
-    author: "A2Z Pharma Team",
   },
   {
     id: "4",
-    title: "Jodo Ke Dard Aur Stiffness Se Rahat: Natural Oil & Herbs",
+    title: "Joint Pain and Stiffness: Understanding Your Options",
     slug: "joint-pain-natural-relief",
-    excerpt: "Arthritis aur joint pain ka natural ilaaj — Mahanarayan Oil, Shallaki aur Majoon Suranjan jaise proven herbal formulations.",
+    excerpt: "Common reasons for joint discomfort, general self-care considerations and signs that need medical assessment.",
     image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800",
     date: "10 Sep 2026",
-    author: "A2Z Pharma Team",
   },
 ];
 
 export default function BlogsPage() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold mb-3 text-primary">
-          Our Blog
+      <div className="mb-10 text-center">
+        <h1 className="mb-3 text-3xl font-bold text-primary md:text-4xl">
+          Health & Wellness Journal
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Health tips, Ayurvedic wisdom, and Unani medicine insights from our experts
+        <p className="mx-auto max-w-2xl text-gray-600">
+          General educational articles about traditional systems, everyday health habits and responsible product use.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {blogs.map((blog) => (
           <Link
             key={blog.id}
             href={`/blogs/${blog.slug}`}
-            className="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden border group"
+            className="group overflow-hidden rounded-lg border bg-white shadow-sm transition hover:shadow-md"
           >
             <div className="relative aspect-video overflow-hidden bg-gray-100">
               <Image
@@ -69,18 +65,15 @@ export default function BlogsPage() {
               />
             </div>
             <div className="p-5">
-              <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                <span>📅 {blog.date}</span>
-                <span>✍️ {blog.author}</span>
-              </div>
-              <h2 className="text-lg font-bold mb-2 text-gray-800 group-hover:text-primary transition line-clamp-2">
+              <p className="mb-2 text-xs text-gray-500">📅 {blog.date}</p>
+              <h2 className="mb-2 line-clamp-2 text-lg font-bold text-gray-800 transition group-hover:text-primary">
                 {blog.title}
               </h2>
-              <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+              <p className="mb-3 line-clamp-3 text-sm text-gray-600">
                 {blog.excerpt}
               </p>
-              <span className="text-primary font-semibold text-sm">
-                Read More →
+              <span className="text-sm font-semibold text-primary">
+                Read Article →
               </span>
             </div>
           </Link>

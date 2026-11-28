@@ -2,25 +2,25 @@ import Link from "next/link";
 
 const blogs = [
   {
-    slug: "ayurveda-for-beginners",
-    title: "Ayurveda for Beginners: Where to Start",
-    excerpt: "Simple guide to understanding Ayurvedic principles and daily routines.",
+    slug: "ayurveda-vs-unani-medicine",
+    title: "Ayurveda and Unani: An Introduction",
+    excerpt: "Understand the different traditional frameworks and why qualified guidance matters.",
     icon: "🌿",
-    category: "Wellness",
+    category: "Traditional Systems",
   },
   {
-    slug: "immunity-herbs",
-    title: "5 Herbs That Boost Immunity Naturally",
-    excerpt: "Powerful Ayurvedic herbs to keep your immune system strong.",
-    icon: "🛡️",
-    category: "Health",
+    slug: "digestive-health-herbal-remedies",
+    title: "Everyday Digestive Health",
+    excerpt: "Everyday habits, product-safety considerations and when to seek care.",
+    icon: "🥗",
+    category: "General Health",
   },
   {
-    slug: "winter-wellness-tips",
-    title: "Winter Wellness Tips from Ayurveda",
-    excerpt: "Stay healthy through the cold season with these simple tips.",
-    icon: "❄️",
-    category: "Seasonal",
+    slug: "joint-pain-natural-relief",
+    title: "Joint Pain and Stiffness",
+    excerpt: "General information about joint discomfort and when medical assessment is important.",
+    icon: "🧘",
+    category: "Wellbeing",
   },
 ];
 
@@ -38,26 +38,26 @@ export default function BlogsStrip() {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {blogs.map((b) => (
+        {blogs.map((blog) => (
           <Link
-            key={b.slug}
-            href={`/blogs/${b.slug}`}
+            key={blog.slug}
+            href={`/blogs/${blog.slug}`}
             className="surface group flex flex-col p-4 transition duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
-              {b.icon}
+              {blog.icon}
             </div>
             <span className="mt-3 text-[10px] font-bold uppercase tracking-wider text-secondary">
-              {b.category}
+              {blog.category}
             </span>
             <h3 className="mt-1 line-clamp-2 text-sm font-bold text-gray-900 group-hover:text-primary">
-              {b.title}
+              {blog.title}
             </h3>
             <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
-              {b.excerpt}
+              {blog.excerpt}
             </p>
             <span className="mt-3 text-xs font-bold text-primary">
-              Read more →
+              Read article →
             </span>
           </Link>
         ))}
