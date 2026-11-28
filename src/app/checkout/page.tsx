@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculateDeliveryFee } from "@/lib/deliveryRules.mjs";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
@@ -13,6 +14,7 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [placedOrder, setPlacedOrder] = useState<{ id: string; total: string; paymentMethod: "cod" | "upi" } | null>(null);
 
   const deliveryFee = calculateDeliveryFee(totalPrice);
   const finalTotal = totalPrice + deliveryFee;
@@ -29,7 +31,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || placingOrder) return;
 
     if (!user) {
       setOrderError("Please login to place an order");
@@ -71,7 +73,13 @@ export default function CheckoutPage() {
         return;
       }
 
+      setPlacedOrder({
+        id: data.order.id,
+        total: String(data.order.total),
+        paymentMethod: data.order.paymentMethod,
+      });
       setOrderPlaced(true);
+      setPlacingOrder(false);
       clearCart();
     } catch (err) {
       console.error("Order error:", err);
@@ -133,16 +141,45 @@ export default function CheckoutPage() {
 
   // Success screen
   if (orderPlaced) {
+    const shortOrderId = placedOrder?.id ? placedOrder.id.slice(-8).toUpperCase() : "CONFIRMED";
+    const upiRequestMessage = [
+      "Hello A2Z Pharma, I have placed an order using Manual UPI.",
+      `Order ID: #${shortOrderId}`,
+      `Amount: ₹${placedOrder?.total ?? finalTotal}`,
+      `Name: ${formData.name}`,
+      `Mobile: ${formData.mobile}`,
+      "Please share the verified UPI payment details. I will make payment only after confirming the details.",
+    ].join("\\n");
+
     return (
       <div className="container mx-auto px-4 py-16 text-center max-w-lg">
         <div className="text-6xl mb-4">✅</div>
         <h1 className="text-2xl md:text-3xl font-bold mb-4 text-primary">
           Order Placed Successfully!
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-3">
           Thank you for shopping with A2Z Pharma. We&apos;ll contact you soon on
           your mobile number.
         </p>
+        <p className="mb-6 text-sm font-semibold text-gray-700">
+          Order #{shortOrderId} · Total ₹{placedOrder?.total ?? finalTotal}
+        </p>
+        {placedOrder?.paymentMethod === "upi" && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-left">
+            <p className="font-semibold text-green-900">Next step: request verified UPI details</p>
+            <p className="mt-1 text-sm text-green-800">
+              Your payment is pending. Contact A2Z Pharma on WhatsApp to receive the verified payment details for this order.
+            </p>
+            <a
+              href={getWhatsAppLink(upiRequestMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"
+            >
+              Request UPI Details on WhatsApp
+            </a>
+          </div>
+        )}
         <div className="flex gap-3 justify-center flex-wrap">
           <Link
             href="/orders"
