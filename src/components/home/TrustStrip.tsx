@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { getWhatsAppLink } from "@/lib/whatsapp";
+
 const items = [
   { icon: "💵", label: "COD Available", color: "text-amber-600" },
   { icon: "📱", label: "Manual UPI", color: "text-blue-600" },
   { icon: "🚚", label: "Delivery Policy", color: "text-primary", href: "/policies/shipping" },
-  { icon: "💬", label: "WhatsApp Support", color: "text-green-600", href: "https://wa.me/918410127168" },
+  { icon: "💬", label: "WhatsApp Support", color: "text-green-600", href: getWhatsAppLink("Hello A2Z Pharma, I need help with a product listing or an order.") },
 ];
 
 export default function TrustStrip() {

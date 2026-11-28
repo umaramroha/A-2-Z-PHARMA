@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 type OrderItem = {
   id: string;
@@ -150,9 +151,9 @@ export default function OrderTrackingPage() {
   const canCancel = CANCELLABLE_STATUSES.includes(order.status);
   const currentIndex = STATUS_STEPS.findIndex((s) => s.key === order.status);
   const orderShortId = order.id.slice(-8).toUpperCase();
-  const whatsappLink = `https://wa.me/918410127168?text=${encodeURIComponent(
+  const whatsappLink = getWhatsAppLink(
     `Hi A2Z Pharma, I need help with order #${orderShortId}.${isCancelled && order.paymentStatus === "PAID" ? " My order was cancelled and payment is marked PAID. Please help arrange the refund." : ""}`,
-  )}`;
+  );
 
   return (
     <div className="page-shell">

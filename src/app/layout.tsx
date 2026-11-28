@@ -13,7 +13,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: { default: "A2Z Pharma | Ayurvedic & Unani Wellness", template: "%s | A2Z Pharma" },
   description:
-    "Shop authentic Ayurvedic and Unani wellness products from A2Z Pharma. Simple ordering and delivery across India.",
+    "Browse Ayurvedic and Unani product listings from A2Z Pharma in Amroha, Uttar Pradesh. Place orders using COD or manual UPI.",
 };
 
 export default function RootLayout({

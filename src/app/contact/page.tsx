@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getWhatsAppLink, getContactMessage } from "@/lib/whatsapp";
+import { siteConfig } from "@/lib/config";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -60,7 +61,7 @@ ${formData.message}`;
                 <div>
                   <h3 className="font-semibold mb-1">Address</h3>
                   <p className="text-gray-600 text-sm">
-                    Amroha, Uttar Pradesh, India
+                    {siteConfig.address}
                   </p>
                 </div>
               </div>
@@ -72,10 +73,10 @@ ${formData.message}`;
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
                   <a
-                    href="tel:+918410127168"
+                    href={`tel:${siteConfig.phoneRaw}`}
                     className="text-gray-600 text-sm hover:text-primary"
                   >
-                    +91 84101 27168
+                    {siteConfig.phone}
                   </a>
                 </div>
               </div>
@@ -87,10 +88,10 @@ ${formData.message}`;
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
                   <a
-                    href="mailto:sahyogherbalpharmacy@gmail.com"
+                    href={`mailto:${siteConfig.email}`}
                     className="text-gray-600 text-sm hover:text-primary"
                   >
-                    sahyogherbalpharmacy@gmail.com
+                    {siteConfig.email}
                   </a>
                 </div>
               </div>

@@ -1,4 +1,6 @@
-export const WHATSAPP_NUMBER = "918410127168"; // 91 + number, no spaces
+import { siteConfig } from "@/lib/config";
+
+export const WHATSAPP_NUMBER = siteConfig.whatsappRaw;
 
 export function getWhatsAppLink(message: string): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -23,7 +25,7 @@ export function getProductOrderMessage(product: {
 
 🔗 ${url}
 
-Kya ye available hai? Order karna hai.`;
+Please confirm availability and share the next steps to place this order.`;
 }
 
 export function getCartOrderMessage(items: {
@@ -47,7 +49,7 @@ ${itemLines}
 
 💰 *Total: ₹${total}*
 
-Kya ye sab available hai? Order confirm karna hai.`;
+Please confirm availability of these items and share the next steps to place the order.`;
 }
 
 export function getContactMessage(name?: string): string {

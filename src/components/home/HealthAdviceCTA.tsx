@@ -1,9 +1,7 @@
+import { siteConfig } from "@/lib/config";
+import { getWhatsAppLink } from "@/lib/whatsapp";
+
 export default function HealthAdviceCTA() {
-  const phone = "918410127168";
-  const phoneDisplay = "+91 84101 27168";
-  const waMessage = encodeURIComponent(
-    "Hello A2Z Pharma, I need help with a product listing or an order."
-  );
 
   return (
     <section className="section-shell section-space">
@@ -21,13 +19,13 @@ export default function HealthAdviceCTA() {
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:ml-6 lg:flex-col">
           <a
-            href={`tel:+${phone}`}
+            href={`tel:${siteConfig.phoneRaw}`}
             className="btn-secondary flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-bold text-primary"
           >
-            📞 Call {phoneDisplay}
+            📞 Call {siteConfig.phone}
           </a>
           <a
-            href={`https://wa.me/${phone}?text=${waMessage}`}
+            href={getWhatsAppLink("Hello A2Z Pharma, I need help with a product listing or an order.")}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"

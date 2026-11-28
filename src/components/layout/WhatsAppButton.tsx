@@ -1,11 +1,9 @@
 "use client";
 
+import { getContactMessage, getWhatsAppLink } from "@/lib/whatsapp";
+
 export default function WhatsAppButton() {
-  const phone = "918410127168";
-  const message = encodeURIComponent(
-    "Hi A2Z Pharma, I need help with a product."
-  );
-  const href = `https://wa.me/${phone}?text=${message}`;
+  const href = getWhatsAppLink(getContactMessage());
 
   return (
     <a
