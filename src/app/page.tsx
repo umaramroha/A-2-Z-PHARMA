@@ -32,7 +32,7 @@ export default function Home() {
       <BannerSlider />
       <TrustStrip />
 
-      <ProductSlider eyebrow="Most loved" title="Best Sellers" limit={8} />
+      <ProductSlider eyebrow="Browse the catalogue" title="Explore Products" limit={8} />
 
       <section className="section-shell section-space">
         <div className="flex items-end justify-between gap-5">
@@ -90,9 +90,9 @@ export default function Home() {
               ✓
             </span>
             <div>
-              <b className="text-sm">Authentic products</b>
+              <b className="text-sm">Product information</b>
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Carefully sourced wellness products.
+                Review product details and availability before ordering.
               </p>
             </div>
           </div>
@@ -101,9 +101,9 @@ export default function Home() {
               ↗
             </span>
             <div>
-              <b className="text-sm">Convenient delivery</b>
+              <b className="text-sm">Delivery information</b>
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Delivery across India with available payment options.
+                Delivery charges are shown at checkout; delivery is subject to availability.
               </p>
             </div>
           </div>

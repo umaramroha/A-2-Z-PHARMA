@@ -167,11 +167,6 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            {/* Rating placeholder */}
-            <div className="mt-2 flex items-center gap-2 text-sm">
-              <span className="text-yellow-500">★★★★★</span>
-              <span className="text-gray-400">(Verified product)</span>
-            </div>
 
             {/* Price */}
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -209,24 +204,24 @@ export default function ProductDetailPage() {
               {product.description || "No description available."}
             </p>
 
-            {/* Trust badges */}
+            {/* Available order information */}
             <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-gray-50 p-3 text-center">
               <div>
-                <p className="text-lg">✓</p>
+                <p className="text-lg">📋</p>
                 <p className="mt-1 text-[10px] font-semibold leading-tight text-gray-600">
-                  100% Authentic
-                </p>
-              </div>
-              <div>
-                <p className="text-lg">🚚</p>
-                <p className="mt-1 text-[10px] font-semibold leading-tight text-gray-600">
-                  India-wide Delivery
+                  Product Details
                 </p>
               </div>
               <div>
                 <p className="text-lg">💵</p>
                 <p className="mt-1 text-[10px] font-semibold leading-tight text-gray-600">
                   COD Available
+                </p>
+              </div>
+              <div>
+                <p className="text-lg">📱</p>
+                <p className="mt-1 text-[10px] font-semibold leading-tight text-gray-600">
+                  Manual UPI
                 </p>
               </div>
             </div>
