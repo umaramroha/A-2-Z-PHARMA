@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   canMoveOrderWithPayment,
+  canSetPaymentStatusForOrder,
   canTransitionStatus,
   VALID_STATUSES,
 } from "@/lib/orderTransitions.mjs";
@@ -407,7 +408,12 @@ export default function AdminOrdersPage() {
                       )}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {order.paymentStatus === "PENDING" && order.status !== "CANCELLED" && (
+                      {order.paymentStatus === "PENDING" &&
+                        canSetPaymentStatusForOrder(
+                          order.status as (typeof VALID_STATUSES)[number],
+                          order.paymentMethod,
+                          "PAID",
+                        ) && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "PAID")}
                           disabled={updating === order.id}

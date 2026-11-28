@@ -30,7 +30,11 @@ export function canTransitionPayment(current, next) {
  * @param {PaymentStatus} nextPaymentStatus
  */
 export function canSetPaymentStatusForOrder(orderStatus, paymentMethod, nextPaymentStatus) {
-  if (nextPaymentStatus === "PAID" && orderStatus === "CANCELLED") return false;
+  if (nextPaymentStatus === "PAID") {
+    if (orderStatus === "CANCELLED") return false;
+    // COD is collected at delivery; do not let staff mark it paid earlier.
+    if (paymentMethod === "cod" && orderStatus !== "DELIVERED") return false;
+  }
   if (nextPaymentStatus === "FAILED" && paymentMethod !== "upi") return false;
   if (nextPaymentStatus === "REFUNDED" && orderStatus !== "CANCELLED") return false;
   return true;
