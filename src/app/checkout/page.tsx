@@ -456,6 +456,8 @@ export default function CheckoutPage() {
                 By placing this order, you agree to our{" "}
                 <Link href="/policies/terms" className="font-medium text-primary underline">Terms & Conditions</Link>
                 {" "}and acknowledge our{" "}
+                <Link href="/policies/privacy" className="font-medium text-primary underline">Privacy Policy</Link>
+                {" "}and{" "}
                 <Link href="/policies/disclaimer" className="font-medium text-primary underline">Medical & Product Disclaimer</Link>.
               </p>
             </div>
