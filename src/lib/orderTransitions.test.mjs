@@ -6,6 +6,7 @@ import {
   canTransitionPayment,
   canTransitionStatus,
   canSetPaymentStatusForOrder,
+  canMoveOrderWithPayment,
 } from "./orderTransitions.mjs";
 
 test("order transitions preserve the existing forward-rank progression and cancellation rules", () => {
@@ -65,4 +66,14 @@ test("payment status must remain consistent with cancellation and payment method
   assert.equal(canSetPaymentStatusForOrder("PROCESSING", "cod", "PAID"), true);
   assert.equal(canSetPaymentStatusForOrder("PENDING", "upi", "REFUNDED"), false);
   assert.equal(canSetPaymentStatusForOrder("CANCELLED", "upi", "REFUNDED"), true);
+});
+
+
+test("manual UPI must be paid before shipping or delivery; COD remains payable on delivery", () => {
+  assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "PENDING"), false);
+  assert.equal(canMoveOrderWithPayment("DELIVERED", "upi", "PENDING"), false);
+  assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "FAILED"), false);
+  assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "PAID"), true);
+  assert.equal(canMoveOrderWithPayment("DELIVERED", "cod", "PENDING"), true);
+  assert.equal(canMoveOrderWithPayment("PROCESSING", "upi", "PENDING"), true);
 });

@@ -35,3 +35,18 @@ export function canSetPaymentStatusForOrder(orderStatus, paymentMethod, nextPaym
   if (nextPaymentStatus === "REFUNDED" && orderStatus !== "CANCELLED") return false;
   return true;
 }
+
+
+/**
+ * Manual UPI must be verified before an order can leave the processing stage.
+ * COD remains payable at delivery.
+ * @param {string} nextOrderStatus
+ * @param {string} paymentMethod
+ * @param {string} paymentStatus
+ */
+export function canMoveOrderWithPayment(nextOrderStatus, paymentMethod, paymentStatus) {
+  if (nextOrderStatus === "SHIPPED" || nextOrderStatus === "DELIVERED") {
+    return paymentMethod !== "upi" || paymentStatus === "PAID";
+  }
+  return true;
+}

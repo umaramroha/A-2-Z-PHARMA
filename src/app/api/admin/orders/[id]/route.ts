@@ -9,6 +9,7 @@ import {
   canTransitionPayment,
   canTransitionStatus,
   canSetPaymentStatusForOrder,
+  canMoveOrderWithPayment,
 } from "@/lib/orderTransitions.mjs";
 
 const patchSchema = z
@@ -98,6 +99,7 @@ export async function PATCH(
       if (!current) throw new Error("ORDER_NOT_FOUND");
 
       const nextOrderStatus = input.status ?? current.status;
+      const nextPaymentStatus = input.paymentStatus ?? current.paymentStatus;
       if (
         input.paymentStatus &&
         !canSetPaymentStatusForOrder(
@@ -107,6 +109,15 @@ export async function PATCH(
         )
       ) {
         throw new Error("INVALID_PAYMENT_STATUS_FOR_ORDER");
+      }
+      if (
+        !canMoveOrderWithPayment(
+          nextOrderStatus,
+          current.paymentMethod,
+          nextPaymentStatus,
+        )
+      ) {
+        throw new Error("UPI_PAYMENT_REQUIRED_BEFORE_SHIPMENT");
       }
 
       const updateData: { status?: string; paymentStatus?: string } = {};
@@ -194,6 +205,12 @@ export async function PATCH(
       if (error.message === "INVALID_PAYMENT_STATUS_FOR_ORDER") {
         return NextResponse.json(
           { error: "Payment status is not valid for this order status or payment method." },
+          { status: 409 }
+        );
+      }
+      if (error.message === "UPI_PAYMENT_REQUIRED_BEFORE_SHIPMENT") {
+        return NextResponse.json(
+          { error: "Verify and mark the manual UPI payment as PAID before shipping or delivering this order." },
           { status: 409 }
         );
       }

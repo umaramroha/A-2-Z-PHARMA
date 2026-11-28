@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { canTransitionStatus, VALID_STATUSES } from "@/lib/orderTransitions.mjs";
+import {
+  canMoveOrderWithPayment,
+  canTransitionStatus,
+  VALID_STATUSES,
+} from "@/lib/orderTransitions.mjs";
 
 type OrderItem = {
   id: string;
@@ -363,10 +367,15 @@ export default function AdminOrdersPage() {
                     <div className="flex flex-wrap gap-2">
                       {STATUS_OPTIONS.filter((status) =>
                         status === order.status ||
-                        canTransitionStatus(
+                        (canTransitionStatus(
                           order.status as (typeof VALID_STATUSES)[number],
                           status as (typeof VALID_STATUSES)[number],
-                        )
+                        ) &&
+                          canMoveOrderWithPayment(
+                            status,
+                            order.paymentMethod,
+                            order.paymentStatus,
+                          ))
                       ).map((status) => (
                         <button
                           key={status}
@@ -391,6 +400,11 @@ export default function AdminOrdersPage() {
                     <div className="text-sm text-gray-600">
                       Payment Status:{" "}
                       <span className="font-semibold text-gray-900">{order.paymentStatus}</span>
+                      {order.paymentMethod === "upi" && order.paymentStatus !== "PAID" && order.status !== "CANCELLED" && (
+                        <p className="mt-1 text-xs text-amber-700">
+                          Verify the manual UPI payment before shipping this order.
+                        </p>
+                      )}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {order.paymentStatus === "PENDING" && order.status !== "CANCELLED" && (
