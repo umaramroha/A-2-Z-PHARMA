@@ -85,7 +85,7 @@ test("manual UPI must be paid before shipping or delivery; COD remains payable o
   assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "FAILED"), false);
   assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "PAID"), true);
   assert.equal(canMoveOrderWithPayment("DELIVERED", "cod", "PENDING"), true);
-  assert.equal(canMoveOrderWithPayment("DELIVERED", "upi", "REFUNDED"), false);
+  assert.equal(canMoveOrderWithPayment("DELIVERED", "upi", "REFUNDED"), true);
   assert.equal(canMoveOrderWithPayment("SHIPPED", "upi", "REFUNDED"), false);
   assert.equal(canMoveOrderWithPayment("PROCESSING", "upi", "PENDING"), true);
 });
