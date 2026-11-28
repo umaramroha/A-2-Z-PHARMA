@@ -7,6 +7,12 @@ async function main() {
   let connected = false;
 
   try {
+    if (process.env.ALLOW_DB_SCHEMA_SETUP !== "true") {
+      throw new Error(
+        "Refusing database schema setup. Verify DATABASE_URL and set ALLOW_DB_SCHEMA_SETUP=true only for an approved database.",
+      );
+    }
+
     const envPath = path.join(__dirname, "..", ".env");
     const envContent = fs.readFileSync(envPath, "utf8");
     const match = envContent.match(/^\s*DATABASE_URL\s*=\s*"?([^"\r\n]+)"?\s*$/m);
@@ -23,7 +29,7 @@ async function main() {
       CREATE TABLE IF NOT EXISTS "RateLimit" (
         "key" TEXT PRIMARY KEY,
         "count" INTEGER NOT NULL DEFAULT 0,
-        "resetAt" TIMESTAMPTZ NOT NULL
+        "resetAt" TIMESTAMP(3) NOT NULL
       );
       CREATE INDEX IF NOT EXISTS "RateLimit_resetAt_idx" ON "RateLimit"("resetAt");
     `);

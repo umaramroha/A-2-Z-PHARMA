@@ -30,6 +30,13 @@ function readEnvFile() {
   );
 }
 
+if (process.env.ALLOW_DB_SEED !== "true") {
+  console.error(
+    "Refusing database seed. Verify DATABASE_URL and set ALLOW_DB_SEED=true only for an approved database.",
+  );
+  process.exit(1);
+}
+
 const fileEnv = readEnvFile();
 const connectionString = process.env.DATABASE_URL || fileEnv.DATABASE_URL;
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
@@ -45,8 +52,12 @@ if (!ADMIN_EMAIL || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ADMIN_EMAIL)) {
   process.exit(1);
 }
 
-if (ADMIN_PASSWORD.length < 12 || ADMIN_PASSWORD.length > 128) {
-  console.error("ADMIN_PASSWORD must be between 12 and 128 characters.");
+if (
+  ADMIN_PASSWORD.length < 12 ||
+  ADMIN_PASSWORD.length > 128 ||
+  Buffer.byteLength(ADMIN_PASSWORD, "utf8") > 72
+) {
+  console.error("ADMIN_PASSWORD must be 12–128 characters and no more than 72 UTF-8 bytes.");
   process.exit(1);
 }
 
