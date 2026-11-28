@@ -7,8 +7,8 @@ These scripts are deliberately not exposed as package scripts. They connect to t
 Creates an initial AdminUser only when the configured email does not already exist.
 
 - Reads `DATABASE_URL` from the environment or local `.env`.
-- Requires `ALLOW_DB_SEED=true` as an explicit opt-in.
-- Requires `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- Requires an explicit shell opt-in: `ALLOW_DB_SEED=true node scripts/seed-admin.js`.
+- Reads `ADMIN_EMAIL` and `ADMIN_PASSWORD` from the environment or local `.env` file.
 - Password must be 12–128 characters and at most 72 UTF-8 bytes.
 - Does not print credentials or change an existing admin account.
 
