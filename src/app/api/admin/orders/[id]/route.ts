@@ -103,7 +103,7 @@ export async function PATCH(
       if (
         input.paymentStatus &&
         !canSetPaymentStatusForOrder(
-          nextOrderStatus as (typeof VALID_STATUSES)[number],
+          current.status as (typeof VALID_STATUSES)[number],
           current.paymentMethod,
           input.paymentStatus
         )

@@ -431,7 +431,11 @@ export default function AdminOrdersPage() {
                       )}
                       {order.paymentMethod === "upi" &&
                         order.paymentStatus === "PENDING" &&
-                        canMoveOrderWithPayment(order.status, order.paymentMethod, "FAILED") && (
+                        canSetPaymentStatusForOrder(
+                          order.status as (typeof VALID_STATUSES)[number],
+                          order.paymentMethod,
+                          "FAILED",
+                        ) && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "FAILED")}
                           disabled={updating === order.id}
@@ -441,7 +445,11 @@ export default function AdminOrdersPage() {
                         </button>
                       )}
                       {order.paymentStatus === "FAILED" &&
-                        canMoveOrderWithPayment(order.status, order.paymentMethod, "PENDING") && (
+                        canSetPaymentStatusForOrder(
+                          order.status as (typeof VALID_STATUSES)[number],
+                          order.paymentMethod,
+                          "PENDING",
+                        ) && (
                         <button
                           onClick={() => updatePaymentStatus(order.id, "PENDING")}
                           disabled={updating === order.id}

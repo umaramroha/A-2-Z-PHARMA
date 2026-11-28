@@ -59,8 +59,13 @@ test("payment transitions preserve the existing pending, failed, paid, and refun
   }
 });
 
-test("payment status must remain consistent with cancellation and payment method", () => {
+test("payment status must remain consistent with order status and payment method", () => {
   assert.equal(canSetPaymentStatusForOrder("CANCELLED", "upi", "PAID"), false);
+  assert.equal(canSetPaymentStatusForOrder("CANCELLED", "upi", "FAILED"), false);
+  assert.equal(canSetPaymentStatusForOrder("CANCELLED", "upi", "PENDING"), false);
+  assert.equal(canSetPaymentStatusForOrder("SHIPPED", "upi", "FAILED"), false);
+  assert.equal(canSetPaymentStatusForOrder("DELIVERED", "upi", "FAILED"), false);
+  assert.equal(canSetPaymentStatusForOrder("SHIPPED", "upi", "PENDING"), false);
   assert.equal(canSetPaymentStatusForOrder("PENDING", "cod", "FAILED"), false);
   assert.equal(canSetPaymentStatusForOrder("PENDING", "upi", "FAILED"), true);
   assert.equal(canSetPaymentStatusForOrder("PENDING", "cod", "PAID"), false);

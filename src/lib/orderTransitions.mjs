@@ -30,15 +30,23 @@ export function canTransitionPayment(current, next) {
  * @param {PaymentStatus} nextPaymentStatus
  */
 export function canSetPaymentStatusForOrder(orderStatus, paymentMethod, nextPaymentStatus) {
+  // A cancelled order may only move to REFUNDED; no further pending/failed/paid states.
+  if (orderStatus === "CANCELLED") return nextPaymentStatus === "REFUNDED";
+
   if (nextPaymentStatus === "PAID") {
-    if (orderStatus === "CANCELLED") return false;
     // COD is collected at delivery; do not let staff mark it paid earlier.
     if (paymentMethod === "cod" && orderStatus !== "DELIVERED") return false;
   }
-  if (nextPaymentStatus === "FAILED" && paymentMethod !== "upi") return false;
+  if (
+    nextPaymentStatus === "FAILED" &&
+    (paymentMethod !== "upi" || !["PENDING", "CONFIRMED", "PROCESSING"].includes(orderStatus))
+  ) return false;
+  if (
+    nextPaymentStatus === "PENDING" &&
+    !["PENDING", "CONFIRMED", "PROCESSING"].includes(orderStatus)
+  ) return false;
   if (
     nextPaymentStatus === "REFUNDED" &&
-    orderStatus !== "CANCELLED" &&
     orderStatus !== "DELIVERED"
   ) return false;
   return true;
@@ -57,7 +65,7 @@ export function canMoveOrderWithPayment(nextOrderStatus, paymentMethod, paymentS
     return paymentMethod !== "upi" || paymentStatus === "PAID";
   }
   if (nextOrderStatus === "DELIVERED") {
-    return paymentMethod !== "upi" || paymentStatus === "PAID";
+    return paymentMethod !== "upi" || paymentStatus === "PAID" || paymentStatus === "REFUNDED";
   }
   return true;
 }
