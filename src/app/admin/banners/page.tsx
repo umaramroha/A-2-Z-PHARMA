@@ -303,7 +303,7 @@ export default function AdminBannersPage() {
             placeholder="e.g. On all Ayurvedic products"
           />
           <Field
-            label="Link URL (click karne pe kahan jaye)"
+            label="Destination URL (where visitors go when they click the banner)"
             value={form.linkUrl}
             onChange={(v) => setForm({ ...form, linkUrl: v })}
             placeholder="/products ya /products?category=male-problems"
@@ -356,7 +356,7 @@ export default function AdminBannersPage() {
       <div className="space-y-3">
         {banners.length === 0 && !showForm && (
           <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500">
-            Abhi koi banner nahi hai. Upar &quot;+ Add New Banner&quot; click karo.
+            No banners yet. Select &quot;+ Add New Banner&quot; to create your first banner.
           </div>
         )}
 
