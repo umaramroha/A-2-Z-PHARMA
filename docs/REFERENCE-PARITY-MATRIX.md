@@ -1,6 +1,6 @@
 # Reference Parity Matrix
 
-Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `dda2fefcd4bac2af95e245e44741b32636f6afd7` versus read-only reference `Amroha-Pharmacy-v2` at pinned snapshot `e8469472d95caecc170fed1a63b47990bbc3aed4`.
+Comparison snapshot: A-2-Z-PHARMA branch `chore/security-hardening` at commit `9fcfb1f61a5691ed82a05baa0dc8c64813a4a1de` versus read-only reference `Amroha-Pharmacy-v2` at pinned snapshot `e8469472d95caecc170fed1a63b47990bbc3aed4`.
 
 ## How to read this matrix
 - **Present (route/file)** means a corresponding route or model was found in the repository tree. It does not prove the flow works end to end.
@@ -85,3 +85,12 @@ These are **not automatic migration recommendations**. They affect database shap
 - A2Z product admin supports a single Cloudinary image upload. Multi-image gallery and structured medicine metadata remain deliberately unimplemented because they require additional schema/compliance decisions.
 - Policy pages now exist in A2Z; do not copy reference business wording or legal details. Owner/legal review remains required.
 - The Amroha repository remains read-only; no reference files or database content were modified.
+
+
+## Current target status update — 2026-11-28
+
+- A2Z now has customer cancellation, transactional stock restoration, COD/UPI transition guards, customer order-attempt rate limiting, and manual refund handling for cancelled or delivered orders.
+- COD is marked paid only after delivery; manual UPI must be verified before shipment/delivery. Refunds are recorded only after staff confirms the transfer was sent.
+- Admin product management supports a single Cloudinary image upload. Gallery and structured medicine metadata remain absent by design pending data/compliance decisions.
+- Global WhatsApp, policy pages, product disclaimer, centralized contact details, `.env.example`, root README and repository safety ignore rules are present.
+- The Amroha reference repository remains read-only; no reference files or database content were modified.

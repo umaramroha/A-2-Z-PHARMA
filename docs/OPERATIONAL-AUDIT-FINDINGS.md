@@ -153,3 +153,14 @@ Record the business/provider decision first: approved sender identity and suppor
 - Admin product form now supports a single Cloudinary upload into the `a2z-products` folder while preserving the manual image URL field. No gallery, structured composition/usage/warning/batch/expiry fields, or Prisma schema change was added.
 - Vercel metadata lists Cloudinary cloud-name and upload-preset variables for Production only; Preview upload behavior was not tested. The existing unsigned preset is reused; no Cloudinary preset or environment configuration was changed.
 - Static ratings and unsupported verification/authenticity claims were removed. Product-specific medicine details still need real owner-approved data and any required compliance review.
+
+
+## Current operational status — 2026-11-28 (reviewed branch head `9fcfb1f61a5691ed82a05baa0dc8c64813a4a1de`)
+
+- Policy pages: Privacy, Terms, Medical/Product Disclaimer, Shipping/Delivery and Cancellation/Return/Refund exist. Product detail now links the Medical/Product Disclaimer. Footer, checkout and contact paths use centralized A2Z contact configuration.
+- Customer-facing copy: About, blog, product trust labels and metadata no longer make unverified authenticity, customer-count, expert-consultation or all-India-delivery claims. Admin banner/product empty-state and field labels are English. Product availability copy now says delivery is limited to serviceable locations.
+- Payment operations: no payment gateway or automatic refund exists. No UPI ID/recipient was configured or independently verified in this review; customers must obtain verified manual UPI details from staff. No order email/SMTP/Resend integration was found. No password reset or email-verification flow exists.
+- Product catalogue: Admin supports a single Cloudinary image upload and manual image URL. No gallery or structured medicine fields (composition, manufacturer, usage, warnings, batch/expiry) exist. Real product data, labels and stock must be owner-verified before launch.
+- Compliance/operations: legal operator identity, actual drug licence, serviceable pincodes, delivery/dispatch commitments, returns/refund decisions, data practices and grievance contact require owner confirmation and qualified review.
+- Repo handoff: root README and placeholder-only `.env.example` were added. `.gitignore` now covers all `.env.*` except the example and local Vercel metadata. `db:push` shortcut and obsolete one-off scripts were removed; guarded Admin bootstrap is documented.
+- No live order/payment test, DB write, migration, secret change, production deployment or merge to main was performed.

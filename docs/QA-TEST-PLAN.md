@@ -76,5 +76,14 @@ Mark a command passed only after its actual exit status is observed. A Vercel RE
 ## Current verified baseline — 2026-11-28
 
 - GitHub Actions run `46136587878` for commit `dda2fefcd4bac2af95e245e44741b32636f6afd7` completed successfully: unit tests, TypeScript check and ESLint all passed.
-- Matching Vercel Preview deployment `dpl_73DCPvSnMV1uGZv7ffumyZ9dVFPD` for the exact same commit reached READY after Next.js production build and 39/39 static pages generated.
+- Matching Vercel Preview deployment `dpl_HohsQgnbHeP6gaWnKrpwbJujPdrj` for the exact same commit reached READY after Next.js production build and 39/39 static pages generated.
 - This is build/CI verification only. No authenticated browser checkout, order placement, cancellation, payment, stock mutation, or database-backed runtime test was performed.
+
+
+## Latest verified CI and Preview — 2026-11-28
+
+- Commit: `9fcfb1f61a5691ed82a05baa0dc8c64813a4a1de`
+- GitHub Actions run: `46139023206` — 52/52 unit tests passed; TypeScript and ESLint passed.
+- ESLint reports 13 non-blocking `@next/next/no-img-element` warnings. No React Hook dependency warnings were reported in this run.
+- Matching Vercel Preview: `dpl_HohsQgnbHeP6gaWnKrpwbJujPdrj` — READY; Next.js generated 39/39 static pages.
+- No browser E2E, real order, payment, stock, refund, or DB-backed concurrency test was performed. Preview's DB isolation from Production is not confirmed.

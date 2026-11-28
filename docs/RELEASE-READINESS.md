@@ -1,56 +1,73 @@
 # A-2-Z Pharma — Release Readiness
 
 **Review date:** 28 November 2026  
-**Repository:** `umaramroha/A-2-Z-PHARMA`  
-**Working branch:** `chore/security-hardening`  
-**Status:** Code hardening is progressing on a Preview branch. This is **not production launch approval**.
+**Repository:** \`umaramroha/A-2-Z-PHARMA\`  
+**Working branch:** \`chore/security-hardening\`  
+**Reviewed branch head:** \`9fcfb1f61a5691ed82a05baa0dc8c64813a4a1de\`  
+**Status:** **NOT PRODUCTION-READY.** Code hardening is progressing on a Preview branch. This is not production launch approval.
 
-## Verified in the latest reviewed checkpoint
+## Latest verified checkpoint
 
-- GitHub Actions run `46138450965` for commit `056585449644972067f2cd1064fe8c1d04a91fa4` passed: 52/52 unit tests, TypeScript check, and ESLint.
-- Matching Vercel Preview deployment `dpl_9LYvRebqTKLAUX1v1TLc4Kna7sWp` reached READY. The Next.js build generated all 39 static pages.
-- Admin/customer session validation, order ownership checks, rate limiting, input/body validation, and baseline security headers have been reviewed at source level.
-- COD and manual UPI state rules are covered by pure unit tests. UPI must be verified before shipment/delivery; COD is marked paid only after delivery; cancellation restores stock in a transaction; refunds are recorded manually.
-- Customer cancellation and admin cancellation use compare-and-set updates before stock restoration. Duplicate concurrent cancellation cannot restore stock twice at the application transaction boundary.
-- Terms, Privacy, Shipping, Returns/Refunds, and Medical/Product Disclaimer pages exist. Unverified business claims and fixed refund promises were removed.
-- Amroha Pharmacy v2 was used as a read-only reference. No reference repository changes were made.
+- GitHub Actions run \`46139023206\` for the reviewed commit passed **52/52 unit tests**, TypeScript, and ESLint.
+- ESLint emitted 13 non-blocking \`@next/next/no-img-element\` warnings. No lint errors.
+- Matching Vercel Preview deployment \`dpl_HohsQgnbHeP6gaWnKrpwbJujPdrj\` reached READY; the Next.js build generated 39/39 static pages.
+- Source review covers customer/Admin sessions, order ownership, rate limiting, validation/body limits, baseline security headers, checkout/order creation, cancellation, payment transitions, stock restoration and product management.
+- Amroha Pharmacy v2 was used only as a read-only reference. Its repository and data were not modified.
+
+## Implemented in the current branch
+
+- COD and manual UPI only; no payment gateway.
+- Manual UPI must be verified and marked PAID before shipping/delivery.
+- COD can be marked PAID only after delivery and collection.
+- Refunds can be recorded for paid cancelled or delivered orders only after Admin confirms the transfer was actually sent. No automatic refund transfer.
+- Customer cancellation is limited to the customer's own PENDING/CONFIRMED/PROCESSING order. Customer/Admin cancellation use transactional compare-and-set before stock restoration.
+- Customer order creation is limited to 5 valid attempts per customer per 15-minute window. Old rate-limit records are pruned on a 1% request sample.
+- Product Admin supports one Cloudinary image upload plus a manual image URL field.
+- Privacy, Terms, Shipping, Returns/Refunds, and Medical/Product Disclaimer pages exist; product detail links to the disclaimer.
+- Global WhatsApp, centralized contact details, English Admin empty states, root README, \`.env.example\`, and stronger \`.gitignore\` rules are present.
+- \`db:push\` package shortcut and obsolete one-off SQL/source-edit/demo-seed scripts were removed.
 
 ## Must be resolved before accepting real customer orders
 
 1. **Database isolation and RateLimit table**
-   - Vercel metadata shows one `DATABASE_URL` record scoped to both Production and Preview. The secret value was not decrypted.
-   - The user reported manually creating the `RateLimit` table and `RateLimit_resetAt_idx` in Neon SQL Editor. It has not been independently confirmed that this was the exact database referenced by Vercel.
+   - Vercel metadata showed one \`DATABASE_URL\` record scoped to both Production and Preview. The secret value was not decrypted.
+   - The user reported manually creating \`RateLimit\` and \`RateLimit_resetAt_idx\` in Neon SQL Editor. It has not been independently confirmed that this is the exact database referenced by Vercel.
    - Rate limiting fails closed if the table is missing. Verify the target database through an approved read-only method before launch.
-   - Do not use Preview for order, cancellation, stock, or payment tests until Preview has a separate isolated database. No DB reads/writes or schema changes were performed during this review.
+   - Do not use Preview for order, cancellation, stock, or payment tests until it has a separate isolated database. No DB reads/writes or schema changes were performed during this review.
 
 2. **Real product and regulatory data**
-   - Replace any demonstration/placeholder catalogue entries with actual products, prices, stock, labels, composition, manufacturer, warnings, and other required information.
-   - Confirm the business's actual licence and legal-operator details with the owner and obtain qualified compliance/legal review. Do not invent licence numbers, approvals, or medical claims.
+   - Replace demonstration/placeholder catalogue entries with actual products, prices, stock, labels, composition, manufacturer, warnings and other required information.
+   - Confirm the business's actual drug licence and legal-operator details with the owner and obtain qualified compliance/legal review. Do not invent licence numbers, approvals or medical claims.
 
 3. **Business operations and contact details**
-   - Owner must confirm phone/WhatsApp number, email, address, serviceable pincodes, delivery charges/coverage, dispatch estimates, cancellation/return/refund rules, and grievance contact.
-   - Confirm the actual UPI recipient/ID and staff verification procedure. No UPI ID or automatic payment/refund gateway is configured by this code review.
+   - Owner must confirm phone/WhatsApp number, email, address, serviceable pincodes, delivery charges/coverage, dispatch estimates, cancellation/return/refund rules, data practices and grievance contact.
+   - No UPI ID/recipient details were configured or independently verified in this code review. Staff must provide verified manual UPI details. No gateway or automatic refund provider is integrated.
+   - No email provider, order email notification, password reset or email-verification workflow was found.
 
 4. **Real workflow validation**
-   - Run customer registration/login, checkout, COD, manual UPI, cancellation, stock restoration, delivery, and refund tests only against an isolated staging database with test products.
-   - Verify email/WhatsApp notifications and delivery/serviceability manually. Source checks and CI are not end-to-end proof.
+   - Run customer registration/login, checkout, COD, manual UPI, cancellation, stock restoration, delivery and refund tests only against an isolated staging database with test products.
+   - Verify Cloudinary upload, WhatsApp handoff, delivery/serviceability and any operational notifications manually. Source checks and CI are not end-to-end proof.
 
 5. **Order idempotency**
-   - The checkout prevents repeated clicks within the same mounted form and order creation is rate-limited. A server-side idempotency key that safely returns the original order after network retries is not implemented.
-   - Proper idempotency needs a persisted request key/unique constraint or an equivalent database design. Treat this as a recommended pre-launch improvement if customers may retry after a timeout; do not add schema changes without approval.
+   - Checkout prevents repeat clicks within one mounted form and order creation is rate-limited. A server-side idempotency key that safely returns the original order after network retries is not implemented.
+   - Proper idempotency needs a persisted request key/unique constraint or equivalent database design. Treat as a recommended pre-launch improvement; do not add schema changes without approval.
+
+6. **Cloudinary upload controls**
+   - The existing unsigned Cloudinary preset is public by design. Client-side file type/size checks can be bypassed; preset-side allowed formats, maximum size and folder restrictions were not independently verified.
+   - Preview upload was not tested because Cloudinary public variables are scoped to Production only. Review preset restrictions before scaling, or approve a signed server-upload design with a secret.
 
 ## Known scope limitations
 
 - No payment gateway; manual UPI remains staff-verified.
-- No automatic refund transfer; staff must send the refund and only then mark the order REFUNDED.
-- No carrier API, postal lookup, or enforced delivery-zone serviceability check.
+- No automatic refund transfer; staff sends the refund and only then marks REFUNDED.
+- No carrier API, postal lookup or enforced delivery-zone serviceability check.
 - No customer password reset or email-verification flow.
 - No browser E2E suite or real DB transaction/concurrency test was run.
-- Vercel Cloudinary upload variables are Production-only; Preview upload behavior was not verified.
-- The unsigned Cloudinary upload preset is intentionally public by design; review upload restrictions/abuse controls in Cloudinary before scaling.
+- 13 non-blocking \`<img>\` optimization warnings remain in ESLint.
+- Preview's database isolation from Production is not confirmed.
 
 ## Deployment and safety boundary
 
-- This work remains on `chore/security-hardening`.
-- No merge to `main`, production promotion/deployment, production secret/environment change, database migration, schema change, SQL write, seed, or production data mutation was performed.
+- This work remains on \`chore/security-hardening\`.
+- No merge to \`main\`, production promotion/deployment, production secret/environment change, database migration, schema change, SQL write, seed or production data mutation was performed.
 - Do not describe this branch as production-ready until the owner completes the operational items above and isolated staging tests pass.
