@@ -1,148 +1,107 @@
 import Link from "next/link";
 
+const orderingSteps = [
+  {
+    number: "01",
+    title: "Browse the catalogue",
+    description: "Explore the Ayurvedic and Unani product listings available on the website.",
+  },
+  {
+    number: "02",
+    title: "Review product details",
+    description: "Check the displayed description, price and availability before placing an order.",
+  },
+  {
+    number: "03",
+    title: "Choose a payment method",
+    description: "Select Cash on Delivery or manual UPI at checkout. UPI remains pending until verified by our team.",
+  },
+  {
+    number: "04",
+    title: "Get order assistance",
+    description: "Contact A2Z Pharma by phone, email or WhatsApp if you need help with an order.",
+  },
+];
+
 export default function AboutPage() {
   return (
-    <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-primary to-primary-dark text-white py-12 md:py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">About A2Z Pharma</h1>
-          <p className="text-lg max-w-2xl mx-auto opacity-90">
-            Authentic Ayurvedic & Unani medicines, trusted by families across India
+    <div className="page-shell">
+      <section className="bg-gradient-to-br from-primary to-primary-dark py-12 text-white md:py-16">
+        <div className="section-shell text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/65">About us</p>
+          <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">About A2Z Pharma</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/85">
+            An online catalogue for Ayurvedic and Unani products, based in Amroha, Uttar Pradesh.
           </p>
         </div>
       </section>
 
-      {/* Story */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-3xl font-bold mb-6 text-primary text-center">Our Story</h2>
-          <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
+      <section className="section-shell section-space">
+        <div className="mx-auto max-w-3xl">
+          <p className="eyebrow">Our store</p>
+          <h2 className="section-title mt-2">A clear way to explore product listings</h2>
+          <div className="mt-5 space-y-4 text-sm leading-7 text-gray-600 sm:text-base">
             <p>
-              A2Z Pharma was founded with a simple mission — to make authentic Ayurvedic and Unani medicines easily accessible to every Indian household. Based in Amroha, Uttar Pradesh, we have been serving our community with genuine, high-quality traditional medicines.
+              A2Z Pharma is based in Amroha, Uttar Pradesh. This website provides a digital catalogue where customers can browse listed Ayurvedic and Unani products, review the information shown on each listing and place an order online.
             </p>
             <p>
-              We believe that nature has the power to heal, and our ancestors&apos; wisdom in Ayurveda and Unani systems of medicine holds the key to holistic wellness. Every product we sell is carefully sourced from trusted manufacturers and traditional practitioners.
+              Product details, prices and stock availability may change. Orders are subject to product availability and delivery serviceability, and the confirmed order total is calculated by the website at checkout.
             </p>
             <p>
-              From tablets, capsules, and pills to Majoon and Safoof — we offer a complete range of remedies for male problems, female problems, and general health issues.
+              We currently offer Cash on Delivery (COD) and manual UPI. A manual UPI order remains pending until the payment has been checked and confirmed by our team. The website does not automatically verify UPI transfers.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Mission Vision */}
-      <section className="bg-white py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="p-6 bg-primary/5 rounded-lg border-l-4 border-primary">
-              <h3 className="text-2xl font-bold mb-3 text-primary">🎯 Our Mission</h3>
-              <p className="text-gray-700">
-                To provide 100% authentic Ayurvedic and Unani medicines at affordable prices, delivering wellness to every home across India.
-              </p>
-            </div>
-            <div className="p-6 bg-secondary/5 rounded-lg border-l-4 border-secondary">
-              <h3 className="text-2xl font-bold mb-3 text-secondary">👁 Our Vision</h3>
-              <p className="text-gray-700">
-                To become India&apos;s most trusted online destination for traditional medicine, preserving ancient wisdom for modern health.
-              </p>
-            </div>
+      <section className="border-y border-gray-200/70 bg-white py-12 sm:py-16">
+        <div className="section-shell">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="eyebrow">How it works</p>
+            <h2 className="section-title mt-2">From browsing to order support</h2>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {orderingSteps.map((step) => (
+              <div key={step.number} className="surface p-5">
+                <p className="text-sm font-extrabold text-primary">{step.number}</p>
+                <h3 className="mt-3 text-base font-bold text-gray-900">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm border-t-4 border-primary">
-              <p className="text-4xl font-bold text-primary mb-2">500+</p>
-              <p className="text-gray-600 text-sm">Happy Customers</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm border-t-4 border-secondary">
-              <p className="text-4xl font-bold text-secondary mb-2">100+</p>
-              <p className="text-gray-600 text-sm">Products</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm border-t-4 border-green-600">
-              <p className="text-4xl font-bold text-green-600 mb-2">100%</p>
-              <p className="text-gray-600 text-sm">Authentic</p>
-            </div>
-            <div className="text-center p-6 bg-white rounded-lg shadow-sm border-t-4 border-primary">
-              <p className="text-4xl font-bold text-primary mb-2">All India</p>
-              <p className="text-gray-600 text-sm">Delivery</p>
-            </div>
+      <section className="section-shell section-space">
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <div className="surface p-6">
+            <h2 className="text-lg font-bold text-gray-900">Delivery information</h2>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              The delivery charge is displayed in the checkout summary. Delivery is subject to serviceability and operational availability.
+            </p>
+            <Link href="/policies/shipping" className="mt-4 inline-flex text-sm font-bold text-primary hover:underline">
+              Read Shipping & Delivery Policy →
+            </Link>
+          </div>
+          <div className="surface p-6">
+            <h2 className="text-lg font-bold text-gray-900">Questions or order assistance?</h2>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              Contact us for questions about product listings, availability, delivery or an existing order. For personal medical advice, consult a qualified healthcare professional.
+            </p>
+            <Link href="/contact" className="mt-4 inline-flex text-sm font-bold text-primary hover:underline">
+              Contact A2Z Pharma →
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Why Choose */}
-      <section className="bg-white py-12 md:py-16">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <h2 className="text-3xl font-bold mb-10 text-center text-primary">
-            Why Choose A2Z Pharma?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex gap-4 p-4">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xl">✓</span>
-              </div>
-              <div>
-                <h3 className="font-bold mb-1">Genuine Products</h3>
-                <p className="text-gray-600 text-sm">
-                  Sourced from trusted manufacturers and traditional practitioners.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 p-4">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xl">✓</span>
-              </div>
-              <div>
-                <h3 className="font-bold mb-1">Affordable Prices</h3>
-                <p className="text-gray-600 text-sm">
-                  Best prices with regular discounts and offers.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 p-4">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xl">✓</span>
-              </div>
-              <div>
-                <h3 className="font-bold mb-1">Fast Delivery</h3>
-                <p className="text-gray-600 text-sm">
-                  Quick delivery across India with COD available.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 p-4">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
-                <span className="text-white text-xl">✓</span>
-              </div>
-              <div>
-                <h3 className="font-bold mb-1">Expert Guidance</h3>
-                <p className="text-gray-600 text-sm">
-                  Free consultation from qualified Ayurvedic & Unani experts.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
       <section className="bg-primary/5 py-12">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary">
-            Ready to Start Your Wellness Journey?
-          </h2>
-          <Link
-            href="/products"
-            className="inline-block bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full font-semibold transition"
-          >
+        <div className="section-shell text-center">
+          <h2 className="text-2xl font-extrabold text-primary md:text-3xl">Explore the product catalogue</h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-600">
+            Review the available listings and their details before placing an order.
+          </p>
+          <Link href="/products" className="btn-primary mt-6 inline-flex">
             Browse Products
           </Link>
         </div>
