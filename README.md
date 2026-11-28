@@ -14,7 +14,7 @@ A small-business online catalogue and order-management website for Ayurvedic and
 ## Technology
 
 - Next.js 15 App Router, React 19 and TypeScript
-- Prisma ORM with PostgreSQL
+- Prisma ORM with PostgreSQL (currently pinned to 5.22.0; upgrade to supported Prisma 7 is a pre-launch task requiring an adapter/config migration and isolated DB tests)
 - Tailwind CSS
 - iron-session customer/Admin sessions
 - Vercel deployment and Cloudinary image uploads

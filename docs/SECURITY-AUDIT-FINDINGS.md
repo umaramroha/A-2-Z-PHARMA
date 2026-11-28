@@ -454,3 +454,10 @@ No production deployment, merge, promotion, environment change, or database oper
 - **Cloudinary:** Admin uploads use a public unsigned preset. Client-side file checks can be bypassed; preset-side allowed-format/size/folder restrictions were not independently verified. Preview upload was not tested because Cloudinary variables are Production-only. Consider a signed server upload after a secret is approved/configured.
 - **Repository hygiene:** `.gitignore` now ignores `.env.*` except `.env.example`, and `.vercel`. The `db:push` package shortcut and obsolete one-off SQL/source-edit/demo-seed scripts were removed. No secret, environment variable, database schema or production data was changed.
 - **Latest CI:** GitHub Actions run `46139023206` passed 52/52 tests, TypeScript and ESLint. ESLint emitted 13 non-blocking `<img>` optimization warnings. Matching Preview `dpl_HohsQgnbHeP6gaWnKrpwbJujPdrj` reached READY with 39/39 static pages. No live DB/E2E tests were run.
+
+
+## Dependency support finding — 2026-11-28
+
+- The target `package.json` and `pnpm-lock.yaml` pin both `prisma` and `@prisma/client` to 5.22.0. This is an older unsupported major line. Prisma's official release-status page says Prisma 6 support ended on 19 November 2026 and recommends supported Prisma 7 for PostgreSQL. See [Prisma release status](https://www.prisma.io/docs/orm/release-status) and the [Prisma 7 upgrade guide](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7).
+- Prisma 7 is a breaking upgrade: minimum Node.js 20.19/22.12, ESM compatibility, a `prisma.config.ts`, and a PostgreSQL driver adapter are required. The current app has no Prisma config or `@prisma/adapter-pg`; `pg` is already a dependency and CI uses Node 22.
+- No Prisma upgrade was attempted. A package-only bump would break the current `PrismaClient` initialization and frozen lockfile. Upgrade only in a separate approved batch after a lockfile-generation environment and isolated staging database are available. No database schema or data was changed.

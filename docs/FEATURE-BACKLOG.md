@@ -4,7 +4,7 @@
 
 ## Priority 0 — Security and release safety
 
-**Current reviewed source commit:** `9fcfb1f61a5691ed82a05baa0dc8c64813a4a1de` (2026-11-28).
+**Current reviewed source commit:** `b3a3145d6fc8d82c788835e50265861756980ba2` (2026-11-28).
 
 | ID | Task | Status | Acceptance / safety boundary |
 |---|---|---|---|
@@ -12,6 +12,7 @@
 | SEC-02 | Audit rate-limit implementation and its database dependency | User reports table/index created in Neon; source-level cleanup and order-create limiting added; exact Vercel DB identity remains unverified | The user supplied successful SQL Editor output for `RateLimit` and `RateLimit_resetAt_idx`. Vercel metadata shows one `DATABASE_URL` record scoped to both Production and Preview; values were not decrypted. Rate-limit records older than 24 hours are pruned on a 1% request sample. The one-off table-creation script was removed after manual setup. Do not run SQL or runtime write tests without explicit approval and an isolated database. |
 | SEC-03 | Review authorization on admin and customer API routes | Source audit complete; no confirmed authorization gap found | All discovered protected admin API routes use the shared password-bound session validator. Customer order reads enforce session ownership; profile updates use the session user ID. Public catalogue/banner reads and login/logout are intentionally public. Middleware cookie-presence check is only a page gate; APIs authorize independently. Runtime/forged-cookie and cross-customer tests remain outstanding. |
 | SEC-04 | Review security headers and CSP feasibility | Baseline headers and one-year HSTS are configured; live response-header verification outstanding; CSP deferred | `next.config.mjs` contains baseline headers plus HSTS without includeSubDomains/preload. The Preview build is READY, but an external response-header check was not completed. Do not enforce CSP until Next.js runtime, inline styles, integrations, and stored image origins are inventoried. |
+| SEC-05 | Upgrade unsupported Prisma ORM 5.22.0 to a supported major | High-priority pre-launch blocker; not changed because Prisma 7 is a breaking upgrade and isolated DB verification/lockfile regeneration are required | `package.json` and `pnpm-lock.yaml` pin `prisma` and `@prisma/client` to 5.22.0. Prisma's current support policy says Prisma 6 support ended 19 Nov 2026 and recommends supported Prisma 7 for PostgreSQL. Prisma 7 requires Node 20.19+/22.12+, ESM compatibility, Prisma config and a PostgreSQL driver adapter; current app has no `prisma.config.ts` or `@prisma/adapter-pg`. CI uses Node 22 and `pg` is already present. Do not bump packages or change the runtime client until a lockfile can be regenerated and DB transactions are tested against an isolated staging database. |
 
 ## Priority 1 — Core commerce correctness
 
@@ -86,3 +87,8 @@ These features are reference-only observations, not approved requirements. Do no
 - Repository hygiene: `.env.*` and `.vercel` are ignored; `.env.example` contains placeholders; root `README.md` documents setup and safety. The `db:push` package shortcut and obsolete one-off SQL/source-edit/demo-seed scripts were removed. The remaining Admin seed script requires an explicit shell opt-in and enforces bcrypt's 72-byte limit.
 - The unsigned Cloudinary preset is public by design. Client-side type/size checks are not a substitute for preset-side restrictions or signed uploads; verify Cloudinary allowed formats, size limits and folder restrictions before scaling.
 - Preview is a build gate only. No DB-backed order, payment, cancellation, stock or refund test was run.
+
+
+## Dependency support blocker — Prisma ORM
+
+The target currently pins `prisma` and `@prisma/client` to 5.22.0. Prisma's official release-status page states Prisma 6 support ended on 19 November 2026 and directs PostgreSQL users to supported Prisma 7 (Prisma 8 is still a release candidate). Prisma 7 introduces breaking runtime/config changes; see the official [Prisma 7 upgrade guide](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7). This upgrade is not applied in this batch because lockfile regeneration and isolated database transaction tests are required.

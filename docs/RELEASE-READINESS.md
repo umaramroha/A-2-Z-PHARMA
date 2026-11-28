@@ -29,6 +29,11 @@
 
 ## Must be resolved before accepting real customer orders
 
+0. **Prisma ORM support**
+   - The repository pins `prisma` and `@prisma/client` to 5.22.0. Prisma 6 support ended on 19 November 2026; the official supported upgrade path for PostgreSQL is Prisma 7. Prisma 7 requires Node 20.19+/22.12+, ESM compatibility, a `prisma.config.ts`, and a PostgreSQL driver adapter. The current app has no Prisma config/adapter. See the [official release status](https://www.prisma.io/docs/orm/release-status) and [Prisma 7 upgrade guide](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7).
+   - Do not perform a package-only bump. Regenerate the pnpm lockfile in an approved environment, then validate connection pooling, transactions, order creation, cancellation and stock restoration against an isolated staging database. No Prisma upgrade or DB change was performed in this review.
+
+
 1. **Database isolation and RateLimit table**
    - Vercel metadata showed one \`DATABASE_URL\` record scoped to both Production and Preview. The secret value was not decrypted.
    - The user reported manually creating \`RateLimit\` and \`RateLimit_resetAt_idx\` in Neon SQL Editor. It has not been independently confirmed that this is the exact database referenced by Vercel.
@@ -59,6 +64,7 @@
 ## Known scope limitations
 
 - No payment gateway; manual UPI remains staff-verified.
+- Prisma ORM 5.22.0 remains a high-priority dependency-support blocker until a tested Prisma 7 upgrade is completed.
 - No automatic refund transfer; staff sends the refund and only then marks REFUNDED.
 - No carrier API, postal lookup or enforced delivery-zone serviceability check.
 - No customer password reset or email-verification flow.
