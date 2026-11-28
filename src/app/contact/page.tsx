@@ -12,9 +12,12 @@ export default function ContactPage() {
     message: "",
   });
   const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSent(false);
+    setSendError("");
 
     // Build WhatsApp message with form data
     const message = `📩 *New Contact Message*
@@ -26,14 +29,15 @@ export default function ContactPage() {
 💬 Message:
 ${formData.message}`;
 
-    // Open WhatsApp with the message
-    window.open(getWhatsAppLink(message), "_blank");
+    // Open a draft only; the customer must still press Send in WhatsApp.
+    const whatsappWindow = window.open(getWhatsAppLink(message), "_blank");
+    if (!whatsappWindow) {
+      setSendError("Your browser blocked the WhatsApp window. Allow pop-ups or use the WhatsApp contact link.");
+      return;
+    }
 
+    whatsappWindow.opener = null;
     setSent(true);
-    setTimeout(() => {
-      setSent(false);
-      setFormData({ name: "", mobile: "", email: "", message: "" });
-    }, 4000);
   };
 
   return (
@@ -121,6 +125,11 @@ ${formData.message}`;
               Send us a Message
             </h2>
 
+            {sendError && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {sendError}
+              </div>
+            )}
             {sent && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
                 WhatsApp message draft prepared. Review it in WhatsApp and tap Send to submit.

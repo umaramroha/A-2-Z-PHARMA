@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
         {/* Current Password */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Current Password * (verify karne ke liye)
+            Current Password *
           </label>
           <input
             type="password"
@@ -179,7 +179,7 @@ export default function AdminSettingsPage() {
             placeholder="Enter current password"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Koi bhi change karne ke liye ye zaroori hai
+            Enter your current password to authorize these changes.
           </p>
         </div>
 
@@ -221,7 +221,7 @@ export default function AdminSettingsPage() {
                   setFormData({ ...formData, newPassword: e.target.value })
                 }
                 className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-primary"
-                placeholder="Min 6 characters (khali chhodo agar change nahi karna)"
+                placeholder="At least 12 characters (leave blank to keep the current password)"
               />
             </div>
 

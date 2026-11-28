@@ -24,7 +24,7 @@ export function canTransitionPayment(current, next) {
 }
 /**
  * Keep payment states consistent with the order and the two supported methods.
- * A failed payment applies only to manual UPI; refunds apply only after cancellation.
+ * A failed payment applies only to manual UPI; refunds apply after cancellation or delivery.
  * @param {OrderStatus} orderStatus
  * @param {string} paymentMethod
  * @param {PaymentStatus} nextPaymentStatus
@@ -53,8 +53,11 @@ export function canSetPaymentStatusForOrder(orderStatus, paymentMethod, nextPaym
  * @param {string} paymentStatus
  */
 export function canMoveOrderWithPayment(nextOrderStatus, paymentMethod, paymentStatus) {
-  if (nextOrderStatus === "SHIPPED" || nextOrderStatus === "DELIVERED") {
+  if (nextOrderStatus === "SHIPPED") {
     return paymentMethod !== "upi" || paymentStatus === "PAID";
+  }
+  if (nextOrderStatus === "DELIVERED") {
+    return paymentMethod !== "upi" || paymentStatus === "PAID" || paymentStatus === "REFUNDED";
   }
   return true;
 }

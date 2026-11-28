@@ -222,8 +222,8 @@ export default function AdminOrdersPage() {
           </h2>
           <p className="text-gray-500">
             {filter === "ALL"
-              ? "Abhi tak koi order nahi aaya hai."
-              : `Koi ${filter} status ka order nahi hai.`}
+              ? "No orders have been received yet."
+              : `No orders with ${filter.toLowerCase()} status were found.`}
           </p>
         </div>
       ) : (

@@ -149,7 +149,7 @@ export default function CheckoutPage() {
       `Name: ${formData.name}`,
       `Mobile: ${formData.mobile}`,
       "Please share the verified UPI payment details. I will make payment only after confirming the details.",
-    ].join("\\n");
+    ].join("\n");
 
     return (
       <div className="container mx-auto px-4 py-16 text-center max-w-lg">

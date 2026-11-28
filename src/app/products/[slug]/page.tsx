@@ -320,7 +320,7 @@ export default function ProductDetailPage() {
             {/* Delivery info */}
             <div className="mt-5 rounded-2xl bg-gray-50 p-4 text-xs leading-6 text-gray-600">
               <p>
-                🚚 <strong>Fast delivery</strong> all over India
+                🚚 <strong>Delivery available</strong> to serviceable locations
               </p>
               <p>
                 💵 <strong>Cash on Delivery</strong> available
