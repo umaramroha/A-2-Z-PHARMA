@@ -11,15 +11,14 @@ import {
   aggregateOrderItems,
   hasExcessOrderQuantity,
 } from "@/lib/orderQuantities.mjs";
+import { isValidIndianMobile } from "@/lib/phoneValidation.mjs";
 
 const orderInputSchema = z.object({
   customerName: z.string().trim().min(1).max(100),
-  customerMobile: z
-    .string()
-    .trim()
-    .min(10)
-    .max(20)
-    .regex(/^[+0-9()\s-]+$/, "Enter a valid mobile number"),
+  customerMobile: z.string().trim().max(20).refine(
+    isValidIndianMobile,
+    "Enter a valid 10-digit Indian mobile number",
+  ),
   customerEmail: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
   address: z.string().trim().min(1).max(500),
   city: z.string().trim().min(1).max(100),

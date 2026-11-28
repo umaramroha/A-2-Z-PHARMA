@@ -5,10 +5,11 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { isValidIndianMobile } from "@/lib/phoneValidation.mjs";
 
 const profileSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
-  mobile: z.string().trim().min(5, "Mobile is required").max(30),
+  mobile: z.string().trim().max(20).refine(isValidIndianMobile, "Enter a valid 10-digit Indian mobile number"),
 });
 
 function isPrismaRecordNotFound(error: unknown) {
