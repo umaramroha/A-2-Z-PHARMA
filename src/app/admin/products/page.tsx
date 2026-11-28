@@ -17,6 +17,17 @@ type Product = {
   isActive: boolean;
 };
 
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+]);
+
 const EMPTY_FORM = {
   name: "",
   slug: "",
@@ -37,6 +48,7 @@ export default function AdminProductsPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -57,6 +69,60 @@ export default function AdminProductsPage() {
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      setError("Choose a JPG, PNG, WebP, AVIF or GIF image.");
+      return;
+    }
+    if (file.size === 0 || file.size > MAX_UPLOAD_BYTES) {
+      setError("Image must be larger than 0 bytes and no more than 5 MB.");
+      return;
+    }
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      setError("Cloudinary upload is not configured for this environment.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setError("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", UPLOAD_PRESET);
+      form.append("folder", "a2z-products");
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: "POST", body: form },
+      );
+      if (!response.ok) throw new Error("Cloudinary upload failed");
+
+      const data: unknown = await response.json();
+      const secureUrl =
+        typeof data === "object" &&
+        data !== null &&
+        "secure_url" in data &&
+        typeof data.secure_url === "string"
+          ? data.secure_url
+          : "";
+      if (!secureUrl.startsWith("https://")) {
+        throw new Error("Cloudinary returned an invalid image URL");
+      }
+
+      setFormData((current) => ({ ...current, image: secureUrl }));
+    } catch (uploadError) {
+      console.error("Product image upload error:", uploadError);
+      setError("Image upload failed. Check the file and Cloudinary preset, then try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
@@ -314,18 +380,33 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Product Image
                 </label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-primary"
-                  placeholder="https://..."
-                />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="url"
+                    value={formData.image}
+                    onChange={(e) =>
+                      setFormData({ ...formData, image: e.target.value })
+                    }
+                    className="w-full flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
+                    placeholder="Paste an HTTPS image URL or upload a file"
+                  />
+                  <label className={`inline-flex cursor-pointer items-center justify-center rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5 ${uploadingImage || saving ? "pointer-events-none opacity-50" : ""}`}>
+                    {uploadingImage ? "Uploading..." : "Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage || saving}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  JPG, PNG, WebP, AVIF or GIF · Maximum 5 MB. Uploads are saved in the A2Z products folder.
+                </p>
                 {formData.image && (
                   <div className="mt-2 w-20 h-20 bg-gray-100 rounded-md overflow-hidden">
                     <img
@@ -359,7 +440,7 @@ export default function AdminProductsPage() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || uploadingImage}
                 className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-full font-semibold transition disabled:opacity-50"
               >
                 {saving
@@ -371,7 +452,8 @@ export default function AdminProductsPage() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-full font-semibold transition"
+                disabled={saving || uploadingImage}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-full font-semibold transition disabled:opacity-50"
               >
                 Cancel
               </button>
