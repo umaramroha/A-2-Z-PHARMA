@@ -44,6 +44,14 @@ export async function checkRateLimit(
     const record = records[0];
     if (!record) throw new Error("Rate limit query returned no record");
 
+    // Remove long-expired keys occasionally so the table stays bounded.
+    if (Math.random() < 0.01) {
+      const expiredBefore = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      await prisma.$executeRaw`
+        DELETE FROM "RateLimit" WHERE "resetAt" < ${expiredBefore}
+      `.catch(() => undefined);
+    }
+
     return getRateLimitDecision(
       record.count,
       maxAttempts,
