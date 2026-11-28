@@ -164,7 +164,7 @@ export default function CartPage() {
       </div>
 
       {/* Mobile sticky checkout bar */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
+      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 py-3 pl-4 pr-20 shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">

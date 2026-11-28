@@ -348,7 +348,7 @@ export default function OrderTrackingPage() {
       </div>
 
       {/* Sticky mobile bar */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
+      <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 py-3 pl-4 pr-20 shadow-[0_-6px_24px_rgba(20,50,36,0.08)] backdrop-blur-xl md:hidden">
         <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3 text-sm font-bold text-white">
           Chat about this order
         </a>
