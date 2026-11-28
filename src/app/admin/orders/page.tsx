@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { canTransitionStatus, VALID_STATUSES } from "@/lib/orderTransitions.mjs";
 
 type OrderItem = {
   id: string;
@@ -39,14 +40,7 @@ type Order = {
   } | null;
 };
 
-const STATUS_OPTIONS = [
-  "PENDING",
-  "CONFIRMED",
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELLED",
-];
+const STATUS_OPTIONS = [...VALID_STATUSES];
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -77,6 +71,13 @@ export default function AdminOrdersPage() {
   }, [fetchOrders]);
 
   const updateStatus = async (orderId: string, newStatus: string) => {
+    if (newStatus === "CANCELLED") {
+      const confirmed = window.confirm(
+        "Cancel this order? Reserved stock will be restored. This action cannot be undone.",
+      );
+      if (!confirmed) return;
+    }
+
     setUpdating(orderId);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
@@ -360,7 +361,13 @@ export default function AdminOrdersPage() {
                       Update Status
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {STATUS_OPTIONS.map((status) => (
+                      {STATUS_OPTIONS.filter((status) =>
+                        status === order.status ||
+                        canTransitionStatus(
+                          order.status as (typeof VALID_STATUSES)[number],
+                          status as (typeof VALID_STATUSES)[number],
+                        )
+                      ).map((status) => (
                         <button
                           key={status}
                           onClick={() => updateStatus(order.id, status)}
