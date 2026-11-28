@@ -57,7 +57,7 @@ export function canMoveOrderWithPayment(nextOrderStatus, paymentMethod, paymentS
     return paymentMethod !== "upi" || paymentStatus === "PAID";
   }
   if (nextOrderStatus === "DELIVERED") {
-    return paymentMethod !== "upi" || paymentStatus === "PAID" || paymentStatus === "REFUNDED";
+    return paymentMethod !== "upi" || paymentStatus === "PAID";
   }
   return true;
 }
